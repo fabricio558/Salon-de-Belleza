@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 14-08-2026 a las 14:05:26
+-- Tiempo de generación: 23-08-2026 a las 18:04:32
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -55,11 +55,18 @@ CREATE TABLE `citas_servicios` (
 --
 
 CREATE TABLE `clientes` (
-  `idUsuarios` int(11) NOT NULL,
-  `fechaCreacion` date DEFAULT NULL,
+  `idClientes` int(11) NOT NULL,
   `notaAlergias` varchar(45) DEFAULT NULL,
   `notaPreferencias` varchar(45) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `clientes`
+--
+
+INSERT INTO `clientes` (`idClientes`, `notaAlergias`, `notaPreferencias`) VALUES
+(1, 'Ninguna', 'Ninguna'),
+(3, 'Ninguna', 'Ninguna');
 
 -- --------------------------------------------------------
 
@@ -102,6 +109,25 @@ CREATE TABLE `especialidades` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `estado`
+--
+
+CREATE TABLE `estado` (
+  `idEstado` int(11) NOT NULL,
+  `estado` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `estado`
+--
+
+INSERT INTO `estado` (`idEstado`, `estado`) VALUES
+(1, 'Activo'),
+(2, 'Inactivo');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `estado_cita`
 --
 
@@ -117,7 +143,7 @@ CREATE TABLE `estado_cita` (
 --
 
 CREATE TABLE `estilistas` (
-  `idUsuarios` int(11) NOT NULL,
+  `idEstilistas` int(11) NOT NULL,
   `porcentajeComision` decimal(5,2) DEFAULT NULL,
   `horaEntrada` time DEFAULT NULL,
   `horaSalida` time DEFAULT NULL
@@ -152,9 +178,8 @@ CREATE TABLE `estilistas_servicios` (
 --
 
 CREATE TABLE `gerente` (
-  `idUsuarios` int(11) NOT NULL,
-  `fechaCreacion` date DEFAULT NULL,
-  `salario` decimal(45,0) DEFAULT NULL,
+  `idGerente` int(11) NOT NULL,
+  `salario` decimal(10,2) DEFAULT NULL,
   `fechaContratacion` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -276,10 +301,30 @@ CREATE TABLE `proveedores_productos` (
 
 CREATE TABLE `recepcionista` (
   `idUsuarios` int(11) NOT NULL,
-  `fechaCreacion` date DEFAULT NULL,
-  `salario` decimal(45,0) DEFAULT NULL,
+  `salario` decimal(10,2) DEFAULT NULL,
   `fechaContratacion` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `roles`
+--
+
+CREATE TABLE `roles` (
+  `idRol` int(11) NOT NULL,
+  `nombreRol` varchar(30) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `roles`
+--
+
+INSERT INTO `roles` (`idRol`, `nombreRol`) VALUES
+(1, 'cliente'),
+(2, 'estilista'),
+(4, 'gerente'),
+(3, 'recepcionista');
 
 -- --------------------------------------------------------
 
@@ -341,9 +386,19 @@ CREATE TABLE `usuarios` (
   `nombreUsuario` varchar(45) DEFAULT NULL,
   `fechaNacimiento` date DEFAULT NULL,
   `correo` varchar(45) DEFAULT NULL,
-  `contrasena` varchar(45) DEFAULT NULL,
-  `estado` tinyint(1) DEFAULT NULL
+  `contrasena` varchar(255) DEFAULT NULL,
+  `fechaCreacion` date DEFAULT NULL,
+  `estado` tinyint(1) DEFAULT NULL,
+  `idRol` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
+INSERT INTO `usuarios` (`idUsuarios`, `nombres`, `apellido`, `nombreUsuario`, `fechaNacimiento`, `correo`, `contrasena`, `fechaCreacion`, `estado`, `idRol`) VALUES
+(1, 'Kevin', 'Fernandez', 'kevincito', '2007-11-14', 'kevinriberplate2611B@gmail.com', '1234', '2026-08-17', NULL, 1),
+(3, 'Fabricio', 'Segovia ', 'fabri_zx', '2008-05-05', 'fabricio.segovia.558@gmail.com', '1234', '2026-08-17', NULL, 1);
 
 --
 -- Índices para tablas volcadas
@@ -370,7 +425,7 @@ ALTER TABLE `citas_servicios`
 -- Indices de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  ADD PRIMARY KEY (`idUsuarios`);
+  ADD PRIMARY KEY (`idClientes`);
 
 --
 -- Indices de la tabla `codigoarea`
@@ -393,6 +448,12 @@ ALTER TABLE `especialidades`
   ADD PRIMARY KEY (`idEspecialidades`);
 
 --
+-- Indices de la tabla `estado`
+--
+ALTER TABLE `estado`
+  ADD PRIMARY KEY (`idEstado`);
+
+--
 -- Indices de la tabla `estado_cita`
 --
 ALTER TABLE `estado_cita`
@@ -402,7 +463,7 @@ ALTER TABLE `estado_cita`
 -- Indices de la tabla `estilistas`
 --
 ALTER TABLE `estilistas`
-  ADD PRIMARY KEY (`idUsuarios`);
+  ADD PRIMARY KEY (`idEstilistas`);
 
 --
 -- Indices de la tabla `estilistas_especialidades`
@@ -424,7 +485,7 @@ ALTER TABLE `estilistas_servicios`
 -- Indices de la tabla `gerente`
 --
 ALTER TABLE `gerente`
-  ADD PRIMARY KEY (`idUsuarios`);
+  ADD PRIMARY KEY (`idGerente`);
 
 --
 -- Indices de la tabla `medios_pago`
@@ -494,6 +555,13 @@ ALTER TABLE `recepcionista`
   ADD PRIMARY KEY (`idUsuarios`);
 
 --
+-- Indices de la tabla `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`idRol`),
+  ADD UNIQUE KEY `nombreRol` (`nombreRol`);
+
+--
 -- Indices de la tabla `services`
 --
 ALTER TABLE `services`
@@ -528,7 +596,8 @@ ALTER TABLE `telefonos_usuarios`
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`idUsuarios`),
   ADD UNIQUE KEY `nombreUsuario_UNIQUE` (`nombreUsuario`),
-  ADD UNIQUE KEY `correo_UNIQUE` (`correo`);
+  ADD UNIQUE KEY `correo_UNIQUE` (`correo`),
+  ADD KEY `fk_usuarios_roles` (`idRol`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -544,7 +613,7 @@ ALTER TABLE `citas`
 -- AUTO_INCREMENT de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idClientes` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `codigoarea`
@@ -565,6 +634,12 @@ ALTER TABLE `especialidades`
   MODIFY `idEspecialidades` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `estado`
+--
+ALTER TABLE `estado`
+  MODIFY `idEstado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de la tabla `estado_cita`
 --
 ALTER TABLE `estado_cita`
@@ -574,13 +649,13 @@ ALTER TABLE `estado_cita`
 -- AUTO_INCREMENT de la tabla `estilistas`
 --
 ALTER TABLE `estilistas`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idEstilistas` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `gerente`
 --
 ALTER TABLE `gerente`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idGerente` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `medios_pago`
@@ -625,6 +700,12 @@ ALTER TABLE `recepcionista`
   MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `idRol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT de la tabla `services`
 --
 ALTER TABLE `services`
@@ -640,7 +721,7 @@ ALTER TABLE `telefonos`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas
@@ -650,9 +731,9 @@ ALTER TABLE `usuarios`
 -- Filtros para la tabla `citas`
 --
 ALTER TABLE `citas`
-  ADD CONSTRAINT `fk_citas_clientes1` FOREIGN KEY (`clientes`) REFERENCES `clientes` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_citas_clientes1` FOREIGN KEY (`clientes`) REFERENCES `clientes` (`idClientes`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_citas_estado_cita1` FOREIGN KEY (`estado_cita_idEstado`) REFERENCES `estado_cita` (`idEstado`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_citas_estilistas1` FOREIGN KEY (`estilistas`) REFERENCES `estilistas` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_citas_estilistas1` FOREIGN KEY (`estilistas`) REFERENCES `estilistas` (`idEstilistas`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `citas_servicios`
@@ -665,40 +746,40 @@ ALTER TABLE `citas_servicios`
 -- Filtros para la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  ADD CONSTRAINT `fk_clientes_usuarios` FOREIGN KEY (`idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_clientes_usuarios` FOREIGN KEY (`idClientes`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `comisiones_pagadas`
 --
 ALTER TABLE `comisiones_pagadas`
-  ADD CONSTRAINT `fk_comisiones_pagadas_estilistas1` FOREIGN KEY (`estilistas_idUsuarios`) REFERENCES `estilistas` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_comisiones_pagadas_estilistas1` FOREIGN KEY (`estilistas_idUsuarios`) REFERENCES `estilistas` (`idEstilistas`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_comisiones_pagadas_pagos1` FOREIGN KEY (`pagos_idPagos`) REFERENCES `pagos` (`idPagos`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `estilistas`
 --
 ALTER TABLE `estilistas`
-  ADD CONSTRAINT `fk_estilistas_usuarios` FOREIGN KEY (`idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_estilistas_usuarios` FOREIGN KEY (`idEstilistas`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `estilistas_especialidades`
 --
 ALTER TABLE `estilistas_especialidades`
   ADD CONSTRAINT `fk_estilistas_has_especialidades_especialidades1` FOREIGN KEY (`especialidades_idEspecialidades`) REFERENCES `especialidades` (`idEspecialidades`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_estilistas_has_especialidades_estilistas1` FOREIGN KEY (`estilistas_idUsuarios`) REFERENCES `estilistas` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_estilistas_has_especialidades_estilistas1` FOREIGN KEY (`estilistas_idUsuarios`) REFERENCES `estilistas` (`idEstilistas`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `estilistas_servicios`
 --
 ALTER TABLE `estilistas_servicios`
-  ADD CONSTRAINT `fk_estilistas_has_servicios_estilistas1` FOREIGN KEY (`idUsuarios`) REFERENCES `estilistas` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_estilistas_has_servicios_estilistas1` FOREIGN KEY (`idUsuarios`) REFERENCES `estilistas` (`idEstilistas`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_estilistas_has_servicios_servicios1` FOREIGN KEY (`idServicios`) REFERENCES `services` (`idServicios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `gerente`
 --
 ALTER TABLE `gerente`
-  ADD CONSTRAINT `fk_gerente_usuarios` FOREIGN KEY (`idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_gerente_usuarios` FOREIGN KEY (`idGerente`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `movimiento_interno`
@@ -713,7 +794,7 @@ ALTER TABLE `movimiento_interno`
 --
 ALTER TABLE `pagos`
   ADD CONSTRAINT `fk_pagos_citas1` FOREIGN KEY (`citas_idCitas`) REFERENCES `citas` (`idCitas`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_pagos_clientes1` FOREIGN KEY (`clientes_idUsuarios`) REFERENCES `clientes` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_pagos_clientes1` FOREIGN KEY (`clientes_idUsuarios`) REFERENCES `clientes` (`idClientes`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_pagos_medios_pago1` FOREIGN KEY (`medios_pago_idMedios_pago`) REFERENCES `medios_pago` (`idMedios_pago`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
@@ -762,6 +843,12 @@ ALTER TABLE `telefonos_proveedores`
 ALTER TABLE `telefonos_usuarios`
   ADD CONSTRAINT `fk_telefonos_has_usuarios_telefonos1` FOREIGN KEY (`telefonos_idTelefonos`) REFERENCES `telefonos` (`idTelefonos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_telefonos_has_usuarios_usuarios1` FOREIGN KEY (`usuarios_idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Filtros para la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD CONSTRAINT `fk_usuarios_roles` FOREIGN KEY (`idRol`) REFERENCES `roles` (`idRol`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
