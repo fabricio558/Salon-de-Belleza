@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,9 +8,45 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  Alert,
 } from 'react-native';
 
 export default function StackScreens({ navigation }) {
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
+
+  const login = async () => {
+    if (!correo || !contrasena) {
+      Alert.alert("Atención", "Campos vacíos. Por favor complete sus datos");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.100.19/salonBelleza/api_proyecto/index.php?action=login', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          correo: correo,
+          contrasena: contrasena,
+        }),
+      });
+  
+      const data = await response.json();
+
+      if (data.success) {
+        navigation.navigate('Agenda Diaria');
+      } else {
+        Alert.alert("Error", data.message);
+      } 
+    } catch(error) {
+      console.error(error);
+      Alert.alert("Error", "No se pudo conectar con el servidor");
+    }
+  }; 
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#e6d3c6" />
@@ -23,13 +59,16 @@ export default function StackScreens({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>INICIAR SESIÓN</Text>
+            
             <TextInput
               style={styles.input}
-                  placeholder="Correo Electrónico"
-                  placeholderTextColor="#8D8B94"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  />
+              placeholder="Correo Electrónico"
+              placeholderTextColor="#8D8B94"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={correo}
+              onChangeText={setCorreo}
+            />
           
             <TextInput
               style={styles.input}
@@ -37,10 +76,13 @@ export default function StackScreens({ navigation }) {
               placeholderTextColor="#8D8B94"
               secureTextEntry={true}
               autoCapitalize="none"
-              />
+              value={contrasena}
+              onChangeText={setContrasena}
+            />
+            
           <Pressable
             style={styles.button}
-            onPress={() => navigation.navigate('Agenda Diaria')}
+            onPress={login}
           >
             <Text style={styles.buttonText}>Iniciar Sesión</Text>
           </Pressable>

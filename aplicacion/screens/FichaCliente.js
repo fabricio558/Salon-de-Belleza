@@ -4,7 +4,7 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import axios from "axios";
 
 
-const API_URL = 'http://192.168.50.65/salonBelleza/api_proyecto/index.php';
+const API_URL = 'http://192.168.100.19/salonBelleza/api_proyecto/index.php';
 
 
 export default function StackScreens({ navigation }) {
@@ -185,7 +185,6 @@ const styles = StyleSheet.create({
     padding: 10, 
   },
 
-  /* --- ESTILOS DE LA LISTA ACTUALIZADOS --- */
   cuerpo: {
     backgroundColor: "#F9F3EE",
     marginHorizontal: 15,
