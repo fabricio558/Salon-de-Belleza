@@ -1,39 +1,91 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView } from "react-native";
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, TouchableOpacity } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import BASE_URL from '../direcIP/ip';
+import Header from '../components/header'; 
+import { useFocusEffect } from '@react-navigation/native';
 
-export default function StackScreens({ navigation }) {
+export default function AgendaSemanal({ navigation }) {
+  const [citas, setCitas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [estilista, setEstilista] = useState(null); 
+
+  useFocusEffect(
+    useCallback(() => {
+      cargarSesionYcitas(); 
+    }, [])
+  );
+
+  const cargarSesionYcitas = async () => {
+    try {
+      const sessionData = await AsyncStorage.getItem('user_session');
+      
+      if (sessionData !== null) {
+        const usuario = JSON.parse(sessionData);
+        setEstilista(usuario);
+        
+        // Maneja idEstilistas o id_estilista según como venga guardado
+        const idEst = usuario.idEstilistas ?? usuario.id_estilista ?? usuario.id;
+        obtenerCitas(idEst); 
+      } else {
+        navigation.navigate('Login'); 
+      }
+    } catch (error) {
+      console.error("Error al cargar la sesión:", error);
+      setCargando(false);
+    }
+  };
+
+  const obtenerCitas = async (idDinamico) => {
+    try {
+      const response = await fetch(`${BASE_URL}/index.php?action=get_citas&id_estilistas=${idDinamico}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setCitas(data.data);
+      }
+    } catch (error) {
+      console.error("Error al cargar citas:", error);
+    } finally {
+      setCargando(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable 
-          style={styles.hamburgerButton} 
-          onPress={() => navigation.openDrawer()}
-        >
-          <Text style={styles.hamburgerIcon}>☰</Text>
-        </Pressable>
+      <Header navigation={navigation} />
 
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.title}>Mandala</Text>
-          <Text style={styles.subtitle}>Tu Centro de Belleza de Confianza</Text>
-        </View>
+      <View style={styles.bodyContainer}>
+        <Text style={styles.saludo}>
+          Agenda de {estilista ? estilista.nombres : 'Semana'}
+        </Text>
+
+        {cargando ? (
+          <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 50 }} />
+        ) : citas.length === 0 ? (
+          <Text style={styles.textoVacio}>No hay citas programadas.</Text>
+        ) : (
+          <FlatList 
+              data={citas}
+              keyExtractor={(item) => item.idCitas.toString()} 
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={styles.tarjetaCita}
+                  onPress={() => {
+                    navigation.navigate('FichaCliente', { id_clientes: item.idClientes });
+                  }}
+                >
+                  <Text style={styles.textoCliente}>
+                    Cliente: {item.nombres} {item.apellido}
+                  </Text>
+                  <Text style={styles.textoHora}>
+                    Fecha: {item.fecha} | Hora: {item.hora} hs
+                  </Text>
+                </TouchableOpacity>
+              )}
+          />
+        )}
       </View>
-
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.body}>
-          <Text style={styles.saludo}>Agenda Semanal</Text>
-          <Text style={styles.agenda}>(FECHA)</Text>
-        </View>
-
-        <Pressable
-          style={styles.button} 
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.buttonText}>Configuración</Text>
-        </Pressable>
-      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -41,76 +93,43 @@ export default function StackScreens({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e1cec2",
+    backgroundColor: '#F9F3EE',
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 20,
-    backgroundColor: '#e6d3c6',
-    flexDirection: 'row', 
-    alignItems: 'center',
-    zIndex: 1,
-    elevation: 3,
-  },
-  hamburgerButton: {
-    padding: 8,
-    marginRight: 10,
-  },
-  hamburgerIcon: {
-    fontSize: 26,
-    color: '#B8838A',
-    fontWeight: 'bold',
-  },
-  headerTitleContainer: {
+  bodyContainer: {
     flex: 1,
-    alignItems: 'center',
-    marginRight: 30, 
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#B8838A',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#8D8B94',
-    marginTop: 2,
-  },
-  scrollContent: {
-    paddingTop: 15,
-    paddingBottom: 30,
-  },
-  body: {
-    backgroundColor: "#efb7da",
-    marginLeft: 15,
-    marginRight: 15,
-    borderRadius: 15,
-    height: 225,
-    marginBottom: 15,
-    padding: 10, 
+    padding: 15,
   },
   saludo: {
     fontSize: 20,
     fontWeight: 'bold',
-    textAlign: "center",
     color: '#B8838A',
+    marginBottom: 15,
   },
-  agenda: {
+  tarjetaCita: {
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  textoCliente: {
     fontSize: 16,
-    textAlign: "center",
+    fontWeight: '600',
+    color: '#4A4A4A',
   },
-  button: {
-    backgroundColor: "#1295e0",
-    justifyContent: "center",
-    alignItems: "center",
-    height: 45,
-    marginLeft: 15,
-    marginRight: 15,
-    borderRadius: 15,
+  textoHora: {
+    fontSize: 14,
+    color: '#8E6E73',
+    marginTop: 4,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
+  textoVacio: {
+    textAlign: 'center',
+    color: '#8E6E73',
+    marginTop: 30,
+    fontSize: 15,
+  }
 });

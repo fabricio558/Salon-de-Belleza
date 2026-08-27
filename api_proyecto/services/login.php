@@ -1,29 +1,54 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 
-include 'db.php';
+require_once __DIR__ . '/../db.php'; 
 
-$data = json_decode(file_get_contents('php://input'), true);
+global $conn;
 
-if (!isset($data['correo']) || !isset($data['contrasena'])){
-    echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
-    exit();
+$input = json_decode(file_get_contents('php://input'), true);
+
+$correo = $input['correo'] ?? '';
+$contrasena = $input['contrasena'] ?? '';
+
+if (empty($correo) || empty($contrasena)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Por favor complete todos los campos.'
+    ]);
+    exit;
 }
 
-$correo = $conn->real_escape_string($data['correo']);
-$contrasena = $data['contrasena'];
+if (!isset($conn) || $conn->connect_error) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error: No se pudo cargar la variable $conn. Verifica la ruta de db.php'
+    ]);
+    exit;
+}
 
-$sql = "SELECT * FROM usuarios WHERE correo = '$correo'";
-$result = $conn->query($sql);
+$sql = "SELECT idUsuarios, nombres, apellido, idRol FROM usuarios WHERE correo = ? AND contrasena = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ss", $correo, $contrasena);
+$stmt->execute();
+$result = $stmt->get_result();
 
-if ($result->num_rows > 0) {
-    $usuario = $result->fetch_assoc();
-
-    if ($contrasena === $usuario['contrasena']){
-        echo json_encode(['success' => true, 'message' => 'Inicio de Sesión completado con exito']);
-    }else{
-        echo json_encode(['success' => false, 'message' => 'Contraseña Incorrecta']);
-    }
-    }else{
-        echo json_encode(['success' => false, 'message' => 'Usuario no encontrado']);
-    }
+if ($row = $result->fetch_assoc()) {
+    echo json_encode([
+        'success' => true,
+        'message' => 'Inicio de Sesión completado con éxito',
+        'data' => [
+            'idEstilistas' => $row['idUsuarios'],
+            'nombres'       => $row['nombres'],
+            'apellido'     => $row['apellido'],
+            'idRol'        => $row['idRol']
+        ]
+    ]);
+} else {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Correo o contraseña incorrectos.'
+    ]);
+}
 ?>

@@ -2,7 +2,7 @@
 
 include 'db.php';
 
-$sql = "SELECT * FROM usuarios ";
+$sql = "SELECT * FROM usuarios WHERE idRol = 1 ";
 
 $result = $conn->query($sql);
 
