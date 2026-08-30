@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 23-08-2026 a las 18:04:32
+-- Tiempo de generación: 31-08-2026 a las 01:33:25
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -34,6 +34,17 @@ CREATE TABLE `citas` (
   `clientes` int(11) NOT NULL,
   `estilistas` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `citas`
+--
+
+INSERT INTO `citas` (`idCitas`, `fechaHora`, `estado_cita_idEstado`, `clientes`, `estilistas`) VALUES
+(3, '2026-08-31 08:30:00', 1, 1, 4),
+(4, '2026-09-01 08:30:00', 1, 3, 5),
+(5, '2026-09-02 08:30:00', 1, 1, 6),
+(6, '2026-09-03 08:30:00', 1, 3, 5),
+(7, '2026-09-02 09:30:00', 1, 1, 6);
 
 -- --------------------------------------------------------
 
@@ -136,6 +147,15 @@ CREATE TABLE `estado_cita` (
   `estado_cita` varchar(45) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Volcado de datos para la tabla `estado_cita`
+--
+
+INSERT INTO `estado_cita` (`idEstado`, `estado_cita`) VALUES
+(1, 'Activa'),
+(2, 'Cancelada'),
+(3, 'Finalizada');
+
 -- --------------------------------------------------------
 
 --
@@ -148,6 +168,15 @@ CREATE TABLE `estilistas` (
   `horaEntrada` time DEFAULT NULL,
   `horaSalida` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `estilistas`
+--
+
+INSERT INTO `estilistas` (`idEstilistas`, `porcentajeComision`, `horaEntrada`, `horaSalida`) VALUES
+(4, 25.00, '07:30:00', '19:00:00'),
+(5, 25.00, '07:30:00', '19:00:00'),
+(6, 25.00, '07:30:00', '19:00:00');
 
 -- --------------------------------------------------------
 
@@ -388,7 +417,7 @@ CREATE TABLE `usuarios` (
   `correo` varchar(45) DEFAULT NULL,
   `contrasena` varchar(255) DEFAULT NULL,
   `fechaCreacion` date DEFAULT NULL,
-  `estado` tinyint(1) DEFAULT NULL,
+  `estado` int(1) NOT NULL,
   `idRol` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -397,8 +426,13 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`idUsuarios`, `nombres`, `apellido`, `nombreUsuario`, `fechaNacimiento`, `correo`, `contrasena`, `fechaCreacion`, `estado`, `idRol`) VALUES
-(1, 'Kevin', 'Fernandez', 'kevincito', '2007-11-14', 'kevinriberplate2611B@gmail.com', '1234', '2026-08-17', NULL, 1),
-(3, 'Fabricio', 'Segovia ', 'fabri_zx', '2008-05-05', 'fabricio.segovia.558@gmail.com', '1234', '2026-08-17', NULL, 1);
+(1, 'Kevin', 'Fernandez', 'kevincito', '2007-11-14', 'kevinriberplate2611B@gmail.com', '1234', '2026-08-17', 1, 1),
+(3, 'Fabricio', 'Segovia ', 'fabri_zx', '2008-05-05', 'fabricio.segovia.558@gmail.com', '1234', '2026-08-17', 1, 1),
+(4, 'Gonzalo', 'Conde', 'bizarrap', '1998-08-29', 'gonzalo@test.com', '1234', '2026-08-26', 1, 2),
+(5, 'Mauro', 'Lombardo', 'duki', '1996-06-24', 'mauro.l@test.com', '12345', '2026-08-26', 1, 2),
+(6, 'Ada', 'Wong', 'adawong', '1974-05-15', 'ada.w@test.com', '1234', '2026-08-26', 1, 2),
+(7, 'Nicki', 'Nicole', 'nicki', '2000-08-25', 'nicki@test.com', '1234', '2026-08-26', 1, 2),
+(8, 'Luis', 'Sera', 'lsera', '1976-02-12', 'luis.s@test.com', '1234', '2026-08-26', 1, 2);
 
 --
 -- Índices para tablas volcadas
@@ -597,7 +631,8 @@ ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`idUsuarios`),
   ADD UNIQUE KEY `nombreUsuario_UNIQUE` (`nombreUsuario`),
   ADD UNIQUE KEY `correo_UNIQUE` (`correo`),
-  ADD KEY `fk_usuarios_roles` (`idRol`);
+  ADD KEY `fk_usuarios_roles` (`idRol`),
+  ADD KEY `estado` (`estado`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -607,7 +642,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `citas`
 --
 ALTER TABLE `citas`
-  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `clientes`
@@ -643,13 +678,13 @@ ALTER TABLE `estado`
 -- AUTO_INCREMENT de la tabla `estado_cita`
 --
 ALTER TABLE `estado_cita`
-  MODIFY `idEstado` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idEstado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `estilistas`
 --
 ALTER TABLE `estilistas`
-  MODIFY `idEstilistas` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idEstilistas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `gerente`
@@ -721,7 +756,7 @@ ALTER TABLE `telefonos`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Restricciones para tablas volcadas
@@ -848,6 +883,7 @@ ALTER TABLE `telefonos_usuarios`
 -- Filtros para la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
+  ADD CONSTRAINT `fk_estado` FOREIGN KEY (`estado`) REFERENCES `estado` (`idEstado`),
   ADD CONSTRAINT `fk_usuarios_roles` FOREIGN KEY (`idRol`) REFERENCES `roles` (`idRol`);
 COMMIT;
 
