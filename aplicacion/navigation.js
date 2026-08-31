@@ -10,6 +10,7 @@ import {
 } from "@react-navigation/drawer";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import HomeEstilista from "./screens/HomeEstilista";
 import AgendaDiaria from "./screens/AgendaDiaria";
 import AgendaSemanal from "./screens/AgendaSemanal";
 import InicioSesion from "./screens/InicioSesion";
@@ -84,8 +85,8 @@ function MyDrawer() {
         drawerInactiveTintColor: '#8D8B94',
       }}
     >
-      <Drawer.Screen name="Agenda Diaria" component={AgendaDiaria} />
-      <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal} />
+      <Drawer.Screen name="Inicio" component={HomeEstilista}/>
+      <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal}/>
       <Drawer.Screen name="FichaCliente" component={FichaCliente} options={{ title: 'Ficha Cliente' }} />
     </Drawer.Navigator>
   );

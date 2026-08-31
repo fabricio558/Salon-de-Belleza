@@ -4,19 +4,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView } from "rea
 export default function StackScreens({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable 
-          style={styles.hamburgerButton} 
-          onPress={() => navigation.openDrawer()}
-        >
-          <Text style={styles.hamburgerIcon}>☰</Text>
-        </Pressable>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.title}>Mandala</Text>
-          <Text style={styles.subtitle}>Tu Centro de Belleza de Confianza</Text>
-        </View>
-      </View>
+      <Header navigation={navigation} />
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}

@@ -14,7 +14,6 @@ if ($id_clientes <= 0) {
     exit;
 }
 
-// Consulta uniendo la tabla clientes con usuarios
 $sql = "SELECT 
             u.idUsuarios, 
             u.nombres, 

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from "react-native";
 import { useRoute } from '@react-navigation/native';
 import BASE_URL from "../direcIP/ip";
 import axios from "axios";
+import Header from "../components/header"; 
 
 export default function FichaCliente({ navigation }) {
   const route = useRoute();
-  
-  // Atrapamos el ID enviado desde AgendaSemanal
   const idClientes = route.params?.id_clientes ?? route.params?.id_clientes;
 
   const [cliente, setCliente] = useState(null);
@@ -15,9 +14,7 @@ export default function FichaCliente({ navigation }) {
 
   const cargarCliente = async () => {
     try {
-      // Reemplazamos API_URL por la variable global BASE_URL
       const response = await axios.get(`${BASE_URL}/index.php?action=get_clientes&id=${idClientes}`);
-      
       if (response.data.success) {
         setCliente(response.data.data);
       } else {
@@ -40,19 +37,8 @@ export default function FichaCliente({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable 
-          style={styles.hamburgerButton} 
-          onPress={() => navigation.openDrawer()}
-        >
-          <Text style={styles.hamburgerIcon}>☰</Text>
-        </Pressable>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.title}>Mandala</Text>
-          <Text style={styles.subtitle}>Tu Centro de Belleza de Confianza</Text>
-        </View>
-      </View>
+      
+      <Header navigation={navigation} />
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
@@ -75,22 +61,22 @@ export default function FichaCliente({ navigation }) {
                 <Text style={styles.etiqueta}>Nombre:</Text>
                 <Text style={styles.valor}>{cliente.nombres} {cliente.apellido}</Text>
               </View>
-            
+
               <View style={styles.campoContainer}>
                 <Text style={styles.etiqueta}>Correo:</Text>
                 <Text style={styles.valor}>{cliente.correo}</Text>
               </View>
-            
+
               <View style={styles.campoContainer}>
                 <Text style={styles.etiqueta}>Fecha de Nacimiento:</Text>
                 <Text style={styles.valor}>{cliente.fechaNacimiento}</Text>
               </View>
-            
+
               <View style={styles.campoContainer}>
                 <Text style={styles.etiqueta}>Alergias:</Text>
                 <Text style={styles.valor}>{cliente.notaAlergias ?? 'Ninguna'}</Text>
               </View>
-            
+
               <View style={styles.campoContainer}>
                 <Text style={styles.etiqueta}>Preferencias:</Text>
                 <Text style={styles.valor}>{cliente.notaPreferencias ?? 'Ninguna'}</Text>
@@ -105,12 +91,6 @@ export default function FichaCliente({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#e1cec2" },
-  header: { paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20, backgroundColor: '#e6d3c6', flexDirection: 'row', alignItems: 'center', zIndex: 1, elevation: 3 },
-  hamburgerButton: { padding: 8, marginRight: 10 },
-  hamburgerIcon: { fontSize: 26, color: '#B8838A', fontWeight: 'bold' },
-  headerTitleContainer: { flex: 1, alignItems: 'center', marginRight: 30 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#B8838A' },
-  subtitle: { fontSize: 13, color: '#8D8B94', marginTop: 2 },
   scrollContent: { paddingTop: 15, paddingBottom: 30 },
   cuerpo: { backgroundColor: "#F9F3EE", marginHorizontal: 15, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#E2D2C6" },
   usuarioLista: { backgroundColor: "transparent", marginBottom: 10, paddingVertical: 6, alignItems: "center" },
