@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 31-08-2026 a las 01:33:25
+-- Tiempo de generación: 01-09-2026 a las 04:39:37
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -44,7 +44,17 @@ INSERT INTO `citas` (`idCitas`, `fechaHora`, `estado_cita_idEstado`, `clientes`,
 (4, '2026-09-01 08:30:00', 1, 3, 5),
 (5, '2026-09-02 08:30:00', 1, 1, 6),
 (6, '2026-09-03 08:30:00', 1, 3, 5),
-(7, '2026-09-02 09:30:00', 1, 1, 6);
+(7, '2026-09-02 09:30:00', 1, 1, 6),
+(8, '2026-09-03 08:00:00', 1, 3, 5),
+(9, '2026-09-07 09:30:00', 1, 3, 4),
+(10, '2026-08-30 15:30:00', 1, 1, 6),
+(11, '2026-08-24 22:41:53', 2, 3, 6),
+(12, '2026-08-25 22:41:53', 3, 1, 6),
+(13, '2026-09-03 10:30:00', 1, 3, 4),
+(14, '2026-08-31 00:41:00', 1, 1, 6),
+(15, '2026-08-31 00:41:00', 1, 1, 6),
+(16, '2026-09-05 17:00:00', 1, 3, 6),
+(17, '2026-08-31 01:12:00', 1, 3, 5);
 
 -- --------------------------------------------------------
 
@@ -58,6 +68,24 @@ CREATE TABLE `citas_servicios` (
   `cantidad` int(11) DEFAULT NULL,
   `precioHistorico` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `citas_servicios`
+--
+
+INSERT INTO `citas_servicios` (`citas_idCitas`, `servicios_idServicios`, `cantidad`, `precioHistorico`) VALUES
+(3, 2, 1, 5000.00),
+(13, 2, 1, 9000.00),
+(14, 2, 1, 9000.00),
+(14, 10, 1, 22000.00),
+(14, 13, 1, 5000.00),
+(15, 2, 1, 9000.00),
+(15, 10, 1, 22000.00),
+(15, 13, 1, 5000.00),
+(16, 2, 1, 9000.00),
+(16, 13, 1, 5000.00),
+(17, 12, 1, 14000.00),
+(17, 13, 1, 5000.00);
 
 -- --------------------------------------------------------
 
@@ -199,6 +227,14 @@ CREATE TABLE `estilistas_servicios` (
   `idUsuarios` int(11) NOT NULL,
   `idServicios` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `estilistas_servicios`
+--
+
+INSERT INTO `estilistas_servicios` (`idUsuarios`, `idServicios`) VALUES
+(4, 2),
+(4, 3);
 
 -- --------------------------------------------------------
 
@@ -365,8 +401,34 @@ CREATE TABLE `services` (
   `idServicios` int(11) NOT NULL,
   `servicio` varchar(45) DEFAULT NULL,
   `precio` decimal(10,0) DEFAULT NULL,
-  `estado` tinyint(1) DEFAULT NULL
+  `estado` int(120) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `services`
+--
+
+INSERT INTO `services` (`idServicios`, `servicio`, `precio`, `estado`) VALUES
+(1, 'Corte de Cabello Dama', 12000, 1),
+(2, 'Corte de Cabello Caballero', 9000, 1),
+(3, 'Corte Infantil', 8000, 1),
+(4, 'Peinado y Modelado', 10000, 1),
+(5, 'Brushing y Secado', 8500, 1),
+(6, 'Tintura Global', 25000, 1),
+(7, 'Mechas / Balayage', 42000, 1),
+(8, 'Reflejos / Claritos', 30000, 1),
+(9, 'Alisado Progresivo', 35000, 1),
+(10, 'Tratamiento de Keratina', 22000, 1),
+(11, 'Botox Capilar', 20000, 1),
+(12, 'Nutrición e Hidratación', 14000, 1),
+(13, 'Perfilado de Cejas', 5000, 1),
+(14, 'Laminado de Cejas', 12000, 1),
+(15, 'Lifting de Pestañas', 15000, 1),
+(16, 'Manicuría Tradicional', 8000, 1),
+(17, 'Esculpidas en Gel', 22000, 1),
+(18, 'Kapping Gel', 16000, 1),
+(19, 'Esmaltado Semipermanente', 11000, 1),
+(20, 'Pedicuría Completa', 13000, 1);
 
 -- --------------------------------------------------------
 
@@ -599,7 +661,8 @@ ALTER TABLE `roles`
 -- Indices de la tabla `services`
 --
 ALTER TABLE `services`
-  ADD PRIMARY KEY (`idServicios`);
+  ADD PRIMARY KEY (`idServicios`),
+  ADD KEY `estado` (`estado`);
 
 --
 -- Indices de la tabla `telefonos`
@@ -642,7 +705,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `citas`
 --
 ALTER TABLE `citas`
-  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `clientes`
@@ -744,7 +807,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `services`
 --
 ALTER TABLE `services`
-  MODIFY `idServicios` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idServicios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `telefonos`
@@ -858,6 +921,12 @@ ALTER TABLE `proveedores_productos`
 --
 ALTER TABLE `recepcionista`
   ADD CONSTRAINT `fk_recepcionista_usuarios` FOREIGN KEY (`idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Filtros para la tabla `services`
+--
+ALTER TABLE `services`
+  ADD CONSTRAINT `fk_estado_servicios` FOREIGN KEY (`estado`) REFERENCES `estado` (`idEstado`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `telefonos`
