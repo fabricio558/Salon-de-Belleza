@@ -39,10 +39,11 @@ if ($row = $result->fetch_assoc()) {
         'success' => true,
         'message' => 'Inicio de Sesión completado con éxito',
         'data' => [
-            'idEstilistas' => $row['idUsuarios'],
+            'idUsuarios'    => $row['idUsuarios'], // <-- Genérico, ideal para clientes
+            'idEstilistas'  => $row['idUsuarios'], // <-- Lo mantenemos para no romper tu dashboard de estilistas
             'nombres'       => $row['nombres'],
-            'apellido'     => $row['apellido'],
-            'idRol'        => $row['idRol']
+            'apellido'      => $row['apellido'],
+            'idRol'         => $row['idRol']
         ]
     ]);
 } else {

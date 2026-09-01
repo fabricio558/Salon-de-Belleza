@@ -1,5 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView } from "react-native";
+import Header from "../components/header";
+
 
 export default function StackScreens({ navigation }) {
   return (

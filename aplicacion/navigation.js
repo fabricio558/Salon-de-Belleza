@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -11,10 +11,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeEstilista from "./screens/HomeEstilista";
-import AgendaDiaria from "./screens/AgendaDiaria";
 import AgendaSemanal from "./screens/AgendaSemanal";
 import InicioSesion from "./screens/InicioSesion";
 import FichaCliente from "./screens/FichaCliente";
+import CrearCita from "./screens/CrearCita";
+import AgendaDiaria from "./screens/AgendaDiaria";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -72,6 +73,35 @@ function CustomDrawerContent(props) {
 }
 
 function MyDrawer() {
+  const [rol, setRol] = useState(null);
+  const [cargandoRol, setCargandoRol] = useState(true);
+
+  useEffect(() => {
+    const obtenerRol = async () => {
+      try {
+        const session = await AsyncStorage.getItem('user_session');
+        if (session) {
+          const userData = JSON.parse(session);
+          setRol(userData.idRol);
+        }
+      } catch (error) {
+        console.log("Error leyendo el rol en el Drawer", error);
+      } finally {
+        setCargandoRol(false);
+      }
+    };
+
+    obtenerRol();
+  }, []);
+
+  if (cargandoRol) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e6d3c6' }}>
+        <ActivityIndicator size="large" color="#B8838A" />
+      </View>
+    );
+  }
+
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -85,9 +115,20 @@ function MyDrawer() {
         drawerInactiveTintColor: '#8D8B94',
       }}
     >
-      <Drawer.Screen name="Inicio" component={HomeEstilista}/>
-      <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal}/>
-      <Drawer.Screen name="FichaCliente" component={FichaCliente} options={{ title: 'Ficha Cliente' }} />
+      {rol === 2 && (
+        <>
+          <Drawer.Screen name="Inicio" component={HomeEstilista} />
+          <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal} />
+          <Drawer.Screen name="FichaCliente" component={FichaCliente} options={{ title: 'Ficha Cliente' }} />
+        </>
+      )}
+
+      {rol === 1 && (
+        <>
+          <Drawer.Screen name="Crear Cita" component={CrearCita} />
+          <Drawer.Screen name="Inicio" component={AgendaDiaria}/>
+        </>
+      )}
     </Drawer.Navigator>
   );
 }
