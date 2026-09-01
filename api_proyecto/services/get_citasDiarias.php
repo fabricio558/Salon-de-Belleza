@@ -15,19 +15,21 @@ if (empty($idEstilistas)) {
     exit;
 }
 
-// Consultamos solo las citas de HOY para el estilista especificado get_citas_hoy.php
-// Usamos CURDATE() para que MySQL filtre por la fecha actual del servidor
 $sql = "SELECT 
             c.idCitas,
             c.clientes AS idClientes,
             TIME_FORMAT(c.fechaHora, '%H:%i') AS hora,
             u.nombres,
-            u.apellido
+            u.apellido,
+            GROUP_CONCAT(s.servicio SEPARATOR ', ') AS servicios
         FROM citas c
         INNER JOIN clientes cl ON c.clientes = cl.idClientes
         INNER JOIN usuarios u ON cl.idClientes = u.idUsuarios
+        LEFT JOIN citas_servicios cs ON cs.citas_idCitas = c.idCitas
+        LEFT JOIN services s ON s.idServicios = cs.servicios_idServicios
         WHERE c.estilistas = ? 
         AND DATE(c.fechaHora) = CURDATE()
+        GROUP BY c.idCitas, c.clientes, c.fechaHora, u.nombres, u.apellido
         ORDER BY c.fechaHora ASC";
 
 $stmt = $conn->prepare($sql);

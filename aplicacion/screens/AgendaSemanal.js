@@ -130,14 +130,15 @@ export default function AgendaSemanal({ navigation }) {
                   <View style={styles.horaContainer}>
                     <Text style={styles.textoHora}>{cita.hora}</Text>
                   </View>
-                  
-                  {/* Contenedor con la información del cliente y el estado */}
+
                   <View style={styles.infoContainer}>
                     <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
-                    
                     <View style={[styles.badgeEstado, { backgroundColor: obtenerColorEstado(cita.estado) }]}>
                       <Text style={styles.textoEstado}>{cita.estado || 'Pendiente'}</Text>
                     </View>
+                    <Text style={styles.textoServicios}>
+                      {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
+                    </Text>
                   </View>
                   
                 </Pressable>
@@ -257,4 +258,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 15,
   },
+
+  textoServicios: {
+  fontSize: 13,
+  color: '#8D8B94',
+  marginTop: 2,
+},
 });

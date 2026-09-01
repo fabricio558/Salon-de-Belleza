@@ -111,7 +111,11 @@ export default function StackScreens({ navigation }) {
                 </View>
                 <View style={styles.infoContainer}>
                   <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
+                  <Text style={styles.textoServicios}>
+                    {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
+                  </Text>
                 </View>
+                
               </Pressable>
             ))
           ) : (
@@ -229,4 +233,10 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "bold",
   },
+
+  textoServicios: {
+  fontSize: 13,
+  color: '#8D8B94',
+  marginTop: 2,
+},
 });
