@@ -19,6 +19,8 @@ $sql = "SELECT
             c.clientes AS idClientes,
             DATE(c.fechaHora) AS fecha,
             TIME_FORMAT(c.fechaHora, '%H:%i') AS hora,
+            UNIX_TIMESTAMP(c.horaInicio) AS horaInicioTs,
+            UNIX_TIMESTAMP(c.horaFin) AS horaFinTs,
             ec.estado_cita AS estado, 
             u.nombres,
             u.apellido,
@@ -27,11 +29,11 @@ $sql = "SELECT
         INNER JOIN clientes cl ON c.clientes = cl.idClientes
         INNER JOIN usuarios u ON cl.idClientes = u.idUsuarios
         LEFT JOIN estado_cita ec ON c.estado_cita_idEstado = ec.idEstado
-        LEFT JOIN citas_servicios cs ON cs.citas_idCitas = c.idCitas
-        LEFT JOIN services s ON s.idServicios = cs.servicios_idServicios
+        LEFT JOIN citas_servicios cs ON c.idCitas = cs.citas_idCitas
+        LEFT JOIN services s ON cs.servicios_idServicios = s.idServicios
         WHERE c.estilistas = ? 
         AND YEARWEEK(c.fechaHora, 1) = YEARWEEK(CURDATE(), 1)
-        GROUP BY c.idCitas, c.clientes, c.fechaHora, ec.estado_cita, u.nombres, u.apellido
+        GROUP BY c.idCitas
         ORDER BY c.fechaHora ASC";
 
 $stmt = $conn->prepare($sql);

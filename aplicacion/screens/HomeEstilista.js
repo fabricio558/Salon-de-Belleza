@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
+import TimerServicio from "../components/TimerServicio";
 
 export default function StackScreens({ navigation }) {
   const [nombre, setNombre] = useState('');
@@ -40,40 +41,54 @@ export default function StackScreens({ navigation }) {
     obtenerFecha();
   }, []);
 
+  const calcularDuracion = (inicioTs, finTs) => {
+    if (!inicioTs || !finTs) return null;
+    const duracionSegundos = Math.max(0, parseInt(finTs, 10) - parseInt(inicioTs, 10));
+    const minutos = Math.floor(duracionSegundos / 60);
+    const segundos = duracionSegundos % 60;
+
+    if (minutos >= 60) {
+      const horas = Math.floor(minutos / 60);
+      const minsRestantes = minutos % 60;
+      return `${horas}h ${minsRestantes}m`;
+    }
+    return `${minutos} min ${segundos} seg`;
+  };
+
+  const cargarDatos = async () => {
+    try {
+      setCargandoCitas(true);
+      const session = await AsyncStorage.getItem('user_session');
+      
+      if (session) {
+        const userData = JSON.parse(session);
+        setNombre(userData.nombres || 'Estilista');
+        
+        const idEstilista = userData.idEstilistas || userData.idUsuarios || userData.id;
+        
+        if (!idEstilista) {
+          setCargandoCitas(false);
+          return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/services/get_citasDiarias.php?id_estilistas=${idEstilista}`);
+        
+        if (response.data && response.data.success) {
+          setCitasHoy(response.data.data);
+        } else {
+          setCitasHoy([]);
+        }
+      }
+    } catch (error) {
+      console.log("Error cargando el dashboard:", error);
+      setCitasHoy([]);
+    } finally {
+      setCargandoCitas(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      const cargarDatos = async () => {
-        try {
-          setCargandoCitas(true);
-          const session = await AsyncStorage.getItem('user_session');
-          
-          if (session) {
-            const userData = JSON.parse(session);
-            setNombre(userData.nombres || 'Estilista');
-            
-            const idEstilista = userData.idEstilistas || userData.idUsuarios || userData.id;
-            
-            if (!idEstilista) {
-              setCargandoCitas(false);
-              return;
-            }
-
-            const response = await axios.get(`${BASE_URL}/services/get_citasDiarias.php?id_estilistas=${idEstilista}`);
-            
-            if (response.data && response.data.success) {
-              setCitasHoy(response.data.data);
-            } else {
-              setCitasHoy([]);
-            }
-          }
-        } catch (error) {
-          console.log("Error cargando el dashboard:", error);
-          setCitasHoy([]);
-        } finally {
-          setCargandoCitas(false);
-        }
-      };
-
       cargarDatos();
     }, [])
   );
@@ -100,24 +115,43 @@ export default function StackScreens({ navigation }) {
           {cargandoCitas ? (
             <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 20 }} />
           ) : citasHoy.length > 0 ? (
-            citasHoy.map((cita) => (
-              <Pressable 
-                key={cita.idCitas} 
-                style={styles.tarjetaCita}
-                onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
-              >
-                <View style={styles.horaContainer}>
-                  <Text style={styles.textoHora}>{cita.hora}</Text>
-                </View>
-                <View style={styles.infoContainer}>
-                  <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
-                  <Text style={styles.textoServicios}>
-                    {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
-                  </Text>
-                </View>
+            citasHoy.map((cita) => {
+              const duracionTexto = calcularDuracion(cita.horaInicioTs, cita.horaFinTs);
+
+              return (
+                <View key={cita.idCitas} style={styles.tarjetaCita}>
                 
-              </Pressable>
-            ))
+                  <Pressable 
+                    style={styles.zonaNavegable}
+                    onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
+                  >
+                    <View style={styles.horaContainer}>
+                      <Text style={styles.textoHora}>{cita.hora}</Text>
+                    </View>
+                    <View style={styles.infoContainer}>
+                      <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
+                      <Text style={styles.textoServicios}>
+                        {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
+                      </Text>
+
+                      {duracionTexto && (
+                        <Text style={{color: '#81C784', fontWeight: 'bold', marginTop: 5}}>
+                          ⏱️ Duración: {duracionTexto}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+
+                  <TimerServicio
+                    idCitas={cita.idCitas}
+                    horaInicioTs={cita.horaInicioTs}
+                    horaFinTs={cita.horaFinTs}
+                    onFinalizado={() => cargarDatos()} 
+                  />
+                  
+                </View>
+              );
+            })
           ) : (
             <View style={styles.tarjetaVacia}>
               <Text style={styles.textoVacio}>No tienes citas programadas para hoy.</Text>

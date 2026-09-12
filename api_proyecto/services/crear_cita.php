@@ -7,8 +7,8 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 $idCliente    = $data['idClientes'] ?? null;
 $idEstilista  = $data['idEstilistas'] ?? null;
-$fechaHora    = $data['fechaHora'] ?? null; // formato 'YYYY-MM-DD HH:MM:SS'
-$servicios    = $data['servicios'] ?? []; // [{idServicios, cantidad, precio}]
+$fechaHora    = $data['fechaHora'] ?? null; 
+$servicios    = $data['servicios'] ?? []; 
 
 if (!$idCliente || !$idEstilista || !$fechaHora || empty($servicios)) {
     echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
@@ -18,7 +18,6 @@ if (!$idCliente || !$idEstilista || !$fechaHora || empty($servicios)) {
 $conn->begin_transaction();
 
 try {
-    // 1 = estado_cita "Activo" (ajustar según tu tabla estado_cita si tiene valores)
     $sqlCita = "INSERT INTO citas (fechaHora, estado_cita_idEstado, clientes, estilistas) VALUES (?, 1, ?, ?)";
     $stmtCita = $conn->prepare($sqlCita);
     $stmtCita->bind_param("sii", $fechaHora, $idCliente, $idEstilista);

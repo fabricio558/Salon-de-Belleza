@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
+import TimerServicio from "../components/TimerServicio";
 
 export default function AgendaSemanal({ navigation }) {
   const [citasAgrupadas, setCitasAgrupadas] = useState([]);
@@ -43,56 +44,54 @@ export default function AgendaSemanal({ navigation }) {
     }));
   };
 
-  // Función para darle un color elegante a cada estado
   const obtenerColorEstado = (estado) => {
-    // Si viene vacío por algún motivo, le ponemos 'Pendiente' por defecto
     const estadoLimpio = (estado || 'Pendiente').toLowerCase().trim();
     
     switch (estadoLimpio) {
       case 'activa':
-        return '#81C784'; // Verde pastel
+        return '#81C784'; 
       case 'finalizada':
-        return '#64B5F6'; // Azul pastel
+        return '#64B5F6'; 
       case 'cancelada':
-        return '#E57373'; // Rojo pastel
+        return '#E57373'; 
       default:
-        return '#FFB74D'; // Naranja pastel (para Pendiente o cualquier otro)
+        return '#FFB74D'; 
+    }
+  };
+
+  const cargarAgenda = async () => {
+    try {
+      setCargando(true);
+      const session = await AsyncStorage.getItem('user_session');
+      
+      if (session) {
+        const userData = JSON.parse(session);
+        const idEstilista = userData.idEstilistas || userData.idUsuarios || userData.id;
+        
+        if (!idEstilista) return;
+
+        const url = `${BASE_URL}/services/get_citasSemanal.php?id_estilistas=${idEstilista}`;
+        const response = await axios.get(url);
+        
+        if (response.data && response.data.success) {
+          const citas = response.data.data;
+          setTotalCitas(citas.length);
+          setCitasAgrupadas(agruparCitasPorDia(citas));
+        } else {
+          setTotalCitas(0);
+          setCitasAgrupadas([]);
+        }
+      }
+    } catch (error) {
+      console.log("Error cargando agenda semanal:", error);
+      setCitasAgrupadas([]);
+    } finally {
+      setCargando(false);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      const cargarAgenda = async () => {
-        try {
-          setCargando(true);
-          const session = await AsyncStorage.getItem('user_session');
-          
-          if (session) {
-            const userData = JSON.parse(session);
-            const idEstilista = userData.idEstilistas || userData.idUsuarios || userData.id;
-            
-            if (!idEstilista) return;
-
-            const url = `${BASE_URL}/services/get_citasSemanal.php?id_estilistas=${idEstilista}`;
-            const response = await axios.get(url);
-            
-            if (response.data && response.data.success) {
-              const citas = response.data.data;
-              setTotalCitas(citas.length);
-              setCitasAgrupadas(agruparCitasPorDia(citas));
-            } else {
-              setTotalCitas(0);
-              setCitasAgrupadas([]);
-            }
-          }
-        } catch (error) {
-          console.log("Error cargando agenda semanal:", error);
-          setCitasAgrupadas([]);
-        } finally {
-          setCargando(false);
-        }
-      };
-
       cargarAgenda();
     }, [])
   );
@@ -122,15 +121,16 @@ export default function AgendaSemanal({ navigation }) {
               </View>
 
               {grupoDia.turnos.map((cita) => (
+              <View key={cita.idCitas} style={styles.tarjetaCita}>
+                
                 <Pressable 
-                  key={cita.idCitas} 
-                  style={styles.tarjetaCita}
+                  style={styles.zonaNavegable}
                   onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
                 >
                   <View style={styles.horaContainer}>
                     <Text style={styles.textoHora}>{cita.hora}</Text>
                   </View>
-
+            
                   <View style={styles.infoContainer}>
                     <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
                     <View style={[styles.badgeEstado, { backgroundColor: obtenerColorEstado(cita.estado) }]}>
@@ -140,9 +140,16 @@ export default function AgendaSemanal({ navigation }) {
                       {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
                     </Text>
                   </View>
-                  
                 </Pressable>
-              ))}
+
+                <TimerServicio
+                idCitas={cita.idCitas}
+                horaInicioTs={cita.horaInicioTs}
+                horaFinTs={cita.horaFinTs}
+                onFinalizado={() => cargarAgenda()}
+                />
+              </View>
+            ))}
             </View>
           ))
         ) : (
@@ -227,7 +234,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4A4A4A',
     fontWeight: '600',
-    marginBottom: 4, // Separación pequeña entre el nombre y el estado
+    marginBottom: 4, 
   },
   badgeEstado: {
     alignSelf: 'flex-start',
@@ -239,7 +246,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: 'bold',
-    textTransform: 'uppercase', // Se ve más profesional en mayúsculas
+    textTransform: 'uppercase', 
   },
   tarjetaVacia: {
     marginHorizontal: 15,
@@ -263,5 +270,25 @@ const styles = StyleSheet.create({
   fontSize: 13,
   color: '#8D8B94',
   marginTop: 2,
+},
+  tarjetaCita: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  marginBottom: 10,
+  padding: 15,
+  elevation: 1,
+  borderLeftWidth: 4,
+  borderLeftColor: '#B8838A',
+  
+},
+zonaNavegable: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+horaContainer: {
+  width: 60,
+  borderRightWidth: 1,
+  borderRightColor: '#F0F0F0',
+  marginRight: 15,
 },
 });

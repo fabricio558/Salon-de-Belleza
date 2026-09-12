@@ -19,17 +19,20 @@ $sql = "SELECT
             c.idCitas,
             c.clientes AS idClientes,
             TIME_FORMAT(c.fechaHora, '%H:%i') AS hora,
+            UNIX_TIMESTAMP(c.horaInicio) AS horaInicioTs,
+            UNIX_TIMESTAMP(c.horaFin) AS horaFinTs,
+            c.estado_cita_idEstado AS estado,
             u.nombres,
             u.apellido,
             GROUP_CONCAT(s.servicio SEPARATOR ', ') AS servicios
         FROM citas c
         INNER JOIN clientes cl ON c.clientes = cl.idClientes
         INNER JOIN usuarios u ON cl.idClientes = u.idUsuarios
-        LEFT JOIN citas_servicios cs ON cs.citas_idCitas = c.idCitas
-        LEFT JOIN services s ON s.idServicios = cs.servicios_idServicios
+        LEFT JOIN citas_servicios cs ON c.idCitas = cs.citas_idCitas
+        LEFT JOIN services s ON cs.servicios_idServicios = s.idServicios
         WHERE c.estilistas = ? 
         AND DATE(c.fechaHora) = CURDATE()
-        GROUP BY c.idCitas, c.clientes, c.fechaHora, u.nombres, u.apellido
+        GROUP BY c.idCitas
         ORDER BY c.fechaHora ASC";
 
 $stmt = $conn->prepare($sql);
