@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 01-09-2026 a las 04:39:37
+-- Tiempo de generación: 13-09-2026 a las 02:00:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -32,29 +32,40 @@ CREATE TABLE `citas` (
   `fechaHora` datetime DEFAULT NULL,
   `estado_cita_idEstado` int(11) NOT NULL,
   `clientes` int(11) NOT NULL,
-  `estilistas` int(11) NOT NULL
+  `estilistas` int(11) NOT NULL,
+  `horaInicio` datetime DEFAULT NULL,
+  `horaFin` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Volcado de datos para la tabla `citas`
 --
 
-INSERT INTO `citas` (`idCitas`, `fechaHora`, `estado_cita_idEstado`, `clientes`, `estilistas`) VALUES
-(3, '2026-08-31 08:30:00', 1, 1, 4),
-(4, '2026-09-01 08:30:00', 1, 3, 5),
-(5, '2026-09-02 08:30:00', 1, 1, 6),
-(6, '2026-09-03 08:30:00', 1, 3, 5),
-(7, '2026-09-02 09:30:00', 1, 1, 6),
-(8, '2026-09-03 08:00:00', 1, 3, 5),
-(9, '2026-09-07 09:30:00', 1, 3, 4),
-(10, '2026-08-30 15:30:00', 1, 1, 6),
-(11, '2026-08-24 22:41:53', 2, 3, 6),
-(12, '2026-08-25 22:41:53', 3, 1, 6),
-(13, '2026-09-03 10:30:00', 1, 3, 4),
-(14, '2026-08-31 00:41:00', 1, 1, 6),
-(15, '2026-08-31 00:41:00', 1, 1, 6),
-(16, '2026-09-05 17:00:00', 1, 3, 6),
-(17, '2026-08-31 01:12:00', 1, 3, 5);
+INSERT INTO `citas` (`idCitas`, `fechaHora`, `estado_cita_idEstado`, `clientes`, `estilistas`, `horaInicio`, `horaFin`) VALUES
+(3, '2026-08-31 08:30:00', 1, 1, 4, NULL, NULL),
+(4, '2026-09-01 08:30:00', 1, 3, 5, NULL, NULL),
+(5, '2026-09-02 08:30:00', 1, 1, 6, NULL, NULL),
+(6, '2026-09-03 08:30:00', 1, 3, 5, NULL, NULL),
+(7, '2026-09-02 09:30:00', 1, 1, 6, NULL, NULL),
+(8, '2026-09-03 08:00:00', 1, 3, 5, NULL, NULL),
+(9, '2026-09-07 09:30:00', 3, 3, 4, '2026-09-12 19:06:12', '2026-09-12 19:06:24'),
+(10, '2026-08-30 15:30:00', 1, 1, 6, NULL, NULL),
+(11, '2026-08-24 22:41:53', 2, 3, 6, NULL, NULL),
+(12, '2026-08-25 22:41:53', 3, 1, 6, NULL, NULL),
+(13, '2026-09-03 10:30:00', 1, 3, 4, NULL, NULL),
+(14, '2026-08-31 00:41:00', 1, 1, 6, NULL, NULL),
+(15, '2026-08-31 00:41:00', 1, 1, 6, NULL, NULL),
+(16, '2026-09-05 17:00:00', 1, 3, 6, NULL, NULL),
+(17, '2026-08-31 01:12:00', 1, 3, 5, NULL, NULL),
+(18, '2026-09-03 08:30:00', 1, 3, 4, NULL, NULL),
+(19, '2026-09-03 08:30:00', 1, 3, 4, NULL, NULL),
+(20, '2026-08-31 05:58:00', 1, 3, 4, NULL, NULL),
+(21, '2026-09-12 17:00:00', 3, 3, 4, '2026-09-12 19:17:42', '2026-09-12 19:17:55'),
+(22, '2026-09-12 18:30:00', 3, 3, 4, '2026-09-12 19:19:22', '2026-09-12 19:21:45'),
+(23, '2026-09-12 22:30:00', 3, 1, 4, '2026-09-12 20:14:09', '2026-09-12 20:16:10'),
+(24, '2026-09-12 22:00:00', 3, 1, 4, '2026-09-12 19:58:20', '2026-09-12 19:59:25'),
+(25, '2026-09-12 21:20:00', 3, 1, 4, '2026-09-12 19:50:55', '2026-09-12 19:52:02'),
+(26, '2026-09-12 21:00:00', 3, 1, 6, '2026-09-12 20:42:40', '2026-09-12 20:43:06');
 
 -- --------------------------------------------------------
 
@@ -85,7 +96,17 @@ INSERT INTO `citas_servicios` (`citas_idCitas`, `servicios_idServicios`, `cantid
 (16, 2, 1, 9000.00),
 (16, 13, 1, 5000.00),
 (17, 12, 1, 14000.00),
-(17, 13, 1, 5000.00);
+(17, 13, 1, 5000.00),
+(18, 4, 1, 10000.00),
+(18, 20, 1, 13000.00),
+(19, 2, 1, 9000.00),
+(20, 5, 1, 8500.00),
+(21, 4, 1, 10000.00),
+(22, 11, 1, 20000.00),
+(23, 9, 1, 35000.00),
+(24, 2, 1, 9000.00),
+(25, 6, 1, 25000.00),
+(26, 1, 1, 12000.00);
 
 -- --------------------------------------------------------
 
@@ -182,7 +203,8 @@ CREATE TABLE `estado_cita` (
 INSERT INTO `estado_cita` (`idEstado`, `estado_cita`) VALUES
 (1, 'Activa'),
 (2, 'Cancelada'),
-(3, 'Finalizada');
+(3, 'Finalizada'),
+(4, 'En Curso');
 
 -- --------------------------------------------------------
 
@@ -705,7 +727,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `citas`
 --
 ALTER TABLE `citas`
-  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `idCitas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de la tabla `clientes`
@@ -741,7 +763,7 @@ ALTER TABLE `estado`
 -- AUTO_INCREMENT de la tabla `estado_cita`
 --
 ALTER TABLE `estado_cita`
-  MODIFY `idEstado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idEstado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `estilistas`
