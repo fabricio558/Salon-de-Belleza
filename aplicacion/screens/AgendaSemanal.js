@@ -114,13 +114,13 @@ export default function AgendaSemanal({ navigation }) {
     
     switch (estadoLimpio) {
       case 'activa':
-        return '#81C784'; 
+        return '#2E7D32'; 
       case 'finalizada':
-        return '#64B5F6'; 
+        return '#1565C0'; 
       case 'cancelada':
-        return '#E57373'; 
+        return '#C62828'; 
       default:
-        return '#FFB74D'; 
+        return '#E65100'; 
     }
   };
 
@@ -170,14 +170,14 @@ export default function AgendaSemanal({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerTitle}>
-          <Text style={styles.tituloPrincipal}>Tus Citas de Esta Semana</Text>
+          <Text style={styles.tituloPrincipal}>AGENDA SEMANAL</Text>
           <Text style={styles.subtitulo}>
             {cargando ? 'Cargando turnos...' : `Tienes un total de ${totalCitas} citas esta semana.`}
           </Text>
         </View>
 
         {cargando ? (
-          <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color="#000000" style={{ marginTop: 40 }} />
         ) : citasAgrupadas.length > 0 ? (
           citasAgrupadas.map((grupoDia, index) => (
             <View key={index} style={styles.grupoDiaContainer}>
@@ -206,7 +206,7 @@ export default function AgendaSemanal({ navigation }) {
                       </Text>
 
                       <Text style={styles.textoPrecioTotal}>
-                        💰 Total: ${cita.precioTotal ? cita.precioTotal : '0'}
+                        Total: ${cita.precioTotal ? cita.precioTotal : '0'}
                       </Text>
                     </View>
                   </Pressable>
@@ -273,7 +273,7 @@ export default function AgendaSemanal({ navigation }) {
               )}
             </ScrollView>
 
-            <Text style={[styles.seccionTitulo, { marginTop: 10 }]}>➕ Agregar del Catálogo:</Text>
+            <Text style={[styles.seccionTitulo, { marginTop: 15 }]}>➕ Agregar del Catálogo:</Text>
             <ScrollView style={styles.listaContenedor}>
               {serviciosCatalogo
                 .filter(serv => !serviciosSeleccionados.includes(serv.idServicios))
@@ -318,132 +318,140 @@ export default function AgendaSemanal({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e1cec2",
+    backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingTop: 10,
+    paddingTop: 15,
     paddingBottom: 40,
+    paddingHorizontal: 20,
   },
   headerTitle: {
-    marginHorizontal: 15,
     marginBottom: 20,
-    paddingTop: 10,
   },
   tituloPrincipal: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 0.5,
   },
   subtitulo: {
-    fontSize: 15,
-    color: '#666',
-    marginTop: 5,
+    fontSize: 13,
+    color: '#666666',
+    marginTop: 2,
   },
   grupoDiaContainer: {
-    marginHorizontal: 15,
     marginBottom: 25,
   },
   diaHeader: {
-    backgroundColor: '#efb7da',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: '#FAFAFA',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginBottom: 12,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   diaTexto: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#4A4A4A',
+    color: '#000000',
     textTransform: 'capitalize',
   },
   tarjetaCita: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 15,
     padding: 15,
-    elevation: 1,
-    borderLeftWidth: 4,
-    borderLeftColor: '#B8838A',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   zonaNavegable: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   horaContainer: {
-    width: 60,
+    width: 65,
     borderRightWidth: 1,
-    borderRightColor: '#F0F0F0',
+    borderRightColor: '#EEEEEE',
     marginRight: 15,
+    justifyContent: 'center',
   },
   textoHora: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontWeight: '900',
+    color: '#000000',
   },
   infoContainer: {
     flex: 1,
     justifyContent: 'center',
   },
   textoCliente: {
-    fontSize: 16,
-    color: '#4A4A4A',
-    fontWeight: '600',
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: 'bold',
     marginBottom: 4, 
   },
   badgeEstado: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 6,
   },
   textoEstado: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase', 
   },
   tarjetaVacia: {
-    marginHorizontal: 15,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: '#FAFAFA',
     borderRadius: 12,
     padding: 30,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e6d3c6',
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
     marginTop: 20,
   },
   textoVacio: {
-    color: '#8D8B94',
+    color: '#666666',
     fontStyle: 'italic',
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
   },
   textoServicios: {
     fontSize: 13,
-    color: '#8D8B94',
-    marginTop: 2,
+    color: '#666666',
+    marginBottom: 4,
   },
   accionesFila: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    paddingTop: 10,
+    borderTopColor: '#EEEEEE',
+    paddingTop: 12,
     width: '100%',
   },
   botonEditarServicios: {
-    backgroundColor: '#efb7da',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   textoBotonEditar: {
     fontSize: 12,
-    color: '#4A4A4A',
+    color: '#000000',
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -456,78 +464,83 @@ const styles = StyleSheet.create({
     width: '90%',
     maxHeight: '80%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    borderRadius: 12,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
     elevation: 5,
   },
   modalTitulo: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontWeight: '900',
+    color: '#000000',
     marginBottom: 5,
     textAlign: 'center',
   },
   modalSubtitulo: {
     fontSize: 13,
-    color: '#666',
-    marginBottom: 15,
+    color: '#666666',
+    marginBottom: 20,
     textAlign: 'center',
   },
   modalBotonesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    marginTop: 20,
   },
   modalBoton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
   },
   botonCancelarModal: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   botonGuardarModal: {
-    backgroundColor: '#B8838A',
+    backgroundColor: '#000000',
   },
   textoBotonCancelar: {
-    color: '#4A4A4A',
+    color: '#333333',
     fontWeight: 'bold',
   },
   textoBotonGuardar: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   seccionTitulo: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#B8838A',
-    marginBottom: 5,
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#000000',
+    marginBottom: 8,
   },
   filaServicioActual: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    borderBottomColor: '#EEEEEE',
   },
   textoServicioActual: {
     fontSize: 14,
-    color: '#4A4A4A',
+    color: '#333333',
     fontWeight: '600',
     flex: 1,
   },
   botonEliminar: {
     backgroundColor: '#FFEBEE',
-    paddingVertical: 5,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
   textoBotonEliminar: {
-    color: '#D32F2F',
+    color: '#C62828',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -536,17 +549,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EEEEEE',
   },
   textoServicioModal: {
     fontSize: 14,
-    color: '#4A4A4A',
+    color: '#333333',
+    fontWeight: '500',
   },
   precioServicioModal: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#666666',
   },
   botonAgregar: {
     backgroundColor: '#E8F5E9',
@@ -555,31 +569,29 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   textoBotonAgregar: {
-    color: '#388E3C',
+    color: '#2E7D32',
     fontSize: 12,
     fontWeight: 'bold',
   },
   textoVacioModal: {
     fontSize: 13,
-    color: '#888',
+    color: '#666666',
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 10,
+    padding: 15,
   },
   listaContenedor: {
-    maxHeight: 130,      
-    marginBottom: 5,
-    backgroundColor: '#F9F9F9',
+    maxHeight: 140,      
+    backgroundColor: '#FAFAFA',
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#EEEEEE',
   },
   textoPrecioTotal: {
     fontSize: 14,
-    color: '#2E7D32',
-    fontWeight: 'bold',
+    color: '#000000',
+    fontWeight: '900',
     marginTop: 4,
   },
 });

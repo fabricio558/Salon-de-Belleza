@@ -3,14 +3,13 @@ import {
   View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Alert,
 } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import AsyncStorage from '@react-native-async-storage/async-storage'; // <-- Importamos esto
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 import BASE_URL from "../direcIP/ip";
 import Header from "../components/header";
 
 export default function CrearCita({ navigation }) {
-  // Eliminamos el useRoute(), ya no recibimos el ID por navegación
-  const [idClientes, setIdClientes] = useState(null); // <-- Ahora es un estado
+  const [idClientes, setIdClientes] = useState(null);
 
   const [servicios, setServicios] = useState([]);
   const [estilistas, setEstilistas] = useState([]);
@@ -23,24 +22,21 @@ export default function CrearCita({ navigation }) {
 
   const cargarDatos = async () => {
     try {
-      // 1. Recuperamos la sesión completa del teléfono
       const session = await AsyncStorage.getItem('user_session');
       
       if (session) {
         const userData = JSON.parse(session);
-        // Leemos el ID usando la nueva clave genérica que pusimos en PHP
         const idDelCliente = userData.idUsuarios; 
         
         if (idDelCliente) {
-            setIdClientes(idDelCliente); // Lo guardamos en el estado
+            setIdClientes(idDelCliente);
         } else {
-            Alert.alert("Error", "Tu sesión es inválida. Volvé a ingresar.");
+            Alert.alert("Atención", "Tu sesión es inválida. Volvé a ingresar.");
         }
       } else {
-        Alert.alert("Error", "No se encontró tu sesión. Por favor, volvé a iniciar sesión.");
+        Alert.alert("Atención", "No se encontró tu sesión. Por favor, volvé a iniciar sesión.");
       }
 
-      // 2. Cargamos los servicios y estilistas
       const [resServicios, resEstilistas] = await Promise.all([
         axios.get(`${BASE_URL}/index.php?action=get_servicios`),
         axios.get(`${BASE_URL}/index.php?action=get_estilistas`),
@@ -60,7 +56,6 @@ export default function CrearCita({ navigation }) {
     cargarDatos();
   }, []);
 
-  // Alterna un servicio dentro/fuera de la selección
   const toggleServicio = (servicio) => {
     setServiciosSeleccionados((prev) => {
       const yaExiste = prev.find((s) => s.idServicios === servicio.idServicios);
@@ -73,7 +68,7 @@ export default function CrearCita({ navigation }) {
           idServicios: servicio.idServicios,
           servicio: servicio.servicio,
           precio: parseFloat(servicio.precio),
-          cantidad: 1, // por defecto
+          cantidad: 1,
         },
       ];
     });
@@ -101,7 +96,6 @@ export default function CrearCita({ navigation }) {
       is24Hour: true,
       onChange: (event, date) => {
         if (event.type === "set" && date) {
-          // Después de elegir la fecha, abrimos el selector de hora
           DateTimePickerAndroid.open({
             value: date,
             mode: "time",
@@ -125,7 +119,7 @@ export default function CrearCita({ navigation }) {
     return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())} ${pad(fecha.getHours())}:${pad(fecha.getMinutes())}:00`;
   };
 
-const confirmarCita = async () => {
+  const confirmarCita = async () => {
     if (!idClientes) {
       Alert.alert("Atención", "No se identificó tu usuario. Volvé a iniciar sesión.");
       return;
@@ -142,7 +136,7 @@ const confirmarCita = async () => {
     setEnviando(true);
     try {
       const response = await axios.post(`${BASE_URL}/index.php?action=crear_cita`, {
-        idClientes: idClientes, // Acá enviamos el ID que sacamos de AsyncStorage
+        idClientes: idClientes,
         idEstilistas: estilistaSeleccionado.idEstilistas,
         fechaHora: formatearFechaHora(fechaHora),
         servicios: serviciosSeleccionados.map((s) => ({
@@ -157,13 +151,9 @@ const confirmarCita = async () => {
           { 
             text: "OK", 
             onPress: () => {
-              // 1. Limpiamos los estados para que el formulario quede vacío
               setServiciosSeleccionados([]);
               setEstilistaSeleccionado(null);
               setFechaHora(new Date());
-
-              // 2. Redirigimos a la pantalla de la agenda
-              // Asegurate de que el nombre coincida EXACTAMENTE con el de navigation.js
               navigation.navigate("Inicio"); 
             } 
           },
@@ -183,29 +173,34 @@ const confirmarCita = async () => {
     return (
       <SafeAreaView style={styles.container}>
         <Header navigation={navigation} />
-        <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#000000" style={{ marginTop: 40 }} />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header navigation={navigation} />
+      <View style={styles.navBar}>
+        <Pressable onPress={() => navigation.openDrawer()} style={styles.hamburgerButton}>
+          <Text style={styles.hamburgerIcon}>☰</Text>
+        </Pressable>
+        <Text style={styles.logoTexto}>MANDALA</Text>
+        <View style={{ width: 30 }} />
+      </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.cuerpo}>
-          <Text style={styles.titulo}>NUEVA CITA</Text>
+          <Text style={styles.titulo}>RESERVAR NUEVA CITA</Text>
+          <Text style={styles.subtitulo}>Selecciona fecha, servicios y estilista preferido.</Text>
 
-          {/* Fecha y hora */}
-          <Text style={styles.etiquetaSeccion}>Fecha y hora</Text>
+          <Text style={styles.etiquetaSeccion}>Fecha y Hora</Text>
           <Pressable style={styles.selectorFecha} onPress={abrirSelectorFecha}>
             <Text style={styles.textoSelectorFecha}>
-              {fechaHora.toLocaleDateString()} - {fechaHora.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              📅 {fechaHora.toLocaleDateString()} - {fechaHora.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </Text>
           </Pressable>
 
-          {/* Servicios */}
-          <Text style={styles.etiquetaSeccion}>Servicios</Text>
+          <Text style={styles.etiquetaSeccion}>Servicios Disponibles</Text>
           {servicios.map((servicio) => {
             const seleccionado = serviciosSeleccionados.find(
               (s) => s.idServicios === servicio.idServicios
@@ -242,29 +237,27 @@ const confirmarCita = async () => {
             );
           })}
 
-          {/* Estilista */}
-          <Text style={styles.etiquetaSeccion}>Estilista</Text>
+          <Text style={styles.etiquetaSeccion}>Selecciona tu Estilista</Text>
           <View style={styles.filaEstilistas}>
             {estilistas.map((est) => {
               const activo = estilistaSeleccionado?.idEstilistas === est.idEstilistas;
               return (
                 <Pressable
                   key={est.idEstilistas}
-                  style={[styles.chipEstilista, activo && styles.chipServicioActivo]}
+                  style={[styles.chipEstilista, activo && styles.chipEstilistaActivo]}
                   onPress={() => setEstilistaSeleccionado(est)}
                 >
-                  <Text style={[styles.textoChip, activo && styles.textoChipActivo]}>
-                    {est.nombres} {est.apellido}
+                  <Text style={[styles.textoChipEstilista, activo && styles.textoChipEstilistaActivo]}>
+                    ✂️ {est.nombres} {est.apellido}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
 
-          {/* Resumen de servicios seleccionados */}
           {serviciosSeleccionados.length > 0 && (
             <View style={styles.resumen}>
-              <Text style={styles.etiquetaSeccion}>Resumen</Text>
+              <Text style={styles.etiquetaResumenTitulo}>Resumen de la Reserva</Text>
               {serviciosSeleccionados.map((s) => (
                 <View key={s.idServicios} style={styles.filaResumen}>
                   <Text style={styles.textoResumen}>
@@ -286,9 +279,9 @@ const confirmarCita = async () => {
             disabled={enviando}
           >
             {enviando ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.textoBotonConfirmar}>Confirmar Cita</Text>
+              <Text style={styles.textoBotonConfirmar}>CONFIRMAR RESERVA</Text>
             )}
           </Pressable>
         </View>
@@ -298,118 +291,211 @@ const confirmarCita = async () => {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#e1cec2" },
-  scrollContent: { paddingTop: 15, paddingBottom: 40 },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#FFFFFF" 
+  },
+  navBar: {
+    height: 60,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    elevation: 2,
+  },
+  hamburgerButton: {
+    padding: 5,
+  },
+  hamburgerIcon: {
+    fontSize: 24,
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  logoTexto: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 2,
+  },
+  scrollContent: { 
+    paddingTop: 20, 
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
   cuerpo: {
-    backgroundColor: "#F9F3EE",
-    marginHorizontal: 15,
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    padding: 15,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "#E2D2C6",
+    borderColor: "#EEEEEE",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   titulo: {
-    color: "#B8838A",
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 1,
+    color: "#000000",
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: 0.5,
     textAlign: "center",
-    marginBottom: 15,
+    marginBottom: 4,
+  },
+  subtitulo: {
+    fontSize: 13,
+    color: "#666666",
+    textAlign: "center",
+    marginBottom: 20,
   },
   etiquetaSeccion: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#8E6E73",
-    marginTop: 15,
-    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#000000",
+    marginTop: 20,
+    marginBottom: 10,
+    letterSpacing: 0.5,
   },
   selectorFecha: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FAFAFA",
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#E2D2C6",
+    borderColor: "#E0E0E0",
   },
-  textoSelectorFecha: { color: "#4A4A4A", fontSize: 15 },
+  textoSelectorFecha: { 
+    color: "#333333", 
+    fontSize: 15,
+    fontWeight: "600",
+  },
   filaServicio: {
     marginBottom: 10,
   },
   chipServicio: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FAFAFA",
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#E2D2C6",
+    borderColor: "#E0E0E0",
   },
   chipServicioActivo: {
-    backgroundColor: "#B8838A",
-    borderColor: "#B8838A",
+    backgroundColor: "#000000",
+    borderColor: "#000000",
   },
-  textoChip: { color: "#4A4A4A", fontSize: 14 },
-  textoChipActivo: { color: "#FFFFFF", fontWeight: "bold" },
+  textoChip: { 
+    color: "#333333", 
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  textoChipActivo: { 
+    color: "#FFFFFF", 
+    fontWeight: "bold" 
+  },
   controlCantidad: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: 10,
+    backgroundColor: "#F5F5F5",
+    padding: 8,
+    borderRadius: 8,
   },
   botonCantidad: {
-    backgroundColor: "#E2D2C6",
+    backgroundColor: "#000000",
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  textoBotonCantidad: { fontSize: 18, fontWeight: "bold", color: "#B8838A" },
+  textoBotonCantidad: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    color: "#FFFFFF" 
+  },
   cantidadTexto: {
-    marginHorizontal: 15,
+    marginHorizontal: 20,
     fontSize: 16,
     fontWeight: "bold",
-    color: "#4A4A4A",
+    color: "#000000",
   },
   filaEstilistas: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 10,
   },
   chipEstilista: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#E2D2C6",
+    borderColor: "#E0E0E0",
+  },
+  chipEstilistaActivo: {
+    backgroundColor: "#000000",
+    borderColor: "#000000",
+  },
+  textoChipEstilista: {
+    color: "#333333",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  textoChipEstilistaActivo: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   resumen: {
-    marginTop: 10,
-    backgroundColor: "#FFFFFF",
+    marginTop: 20,
+    backgroundColor: "#FAFAFA",
     borderRadius: 8,
-    padding: 12,
+    padding: 15,
     borderWidth: 1,
-    borderColor: "#E2D2C6",
+    borderColor: "#E0E0E0",
+  },
+  etiquetaResumenTitulo: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#000000",
+    marginBottom: 10,
   },
   filaResumen: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  textoResumen: { fontSize: 14, color: "#4A4A4A" },
+  textoResumen: { 
+    fontSize: 14, 
+    color: "#333333",
+    fontWeight: "500",
+  },
   filaTotal: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderTopWidth: 1,
-    borderTopColor: "#E2D2C6",
-    paddingTop: 8,
-    marginTop: 4,
+    borderTopColor: "#E0E0E0",
+    paddingTop: 10,
+    marginTop: 6,
   },
-  textoTotal: { fontSize: 16, fontWeight: "bold", color: "#B8838A" },
+  textoTotal: { 
+    fontSize: 16, 
+    fontWeight: "900", 
+    color: "#000000" 
+  },
   botonConfirmar: {
-    backgroundColor: "#B8838A",
-    borderRadius: 10,
-    paddingVertical: 15,
+    backgroundColor: "#000000",
+    borderRadius: 8,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 25,
   },
-  textoBotonConfirmar: { color: "#FFFFFF", fontWeight: "bold", fontSize: 16 },
+  textoBotonConfirmar: { 
+    color: "#FFFFFF", 
+    fontWeight: "bold", 
+    fontSize: 14,
+    letterSpacing: 1,
+  },
 });

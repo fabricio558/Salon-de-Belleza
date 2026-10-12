@@ -25,7 +25,7 @@ $sql = "SELECT
             u.apellido,
             GROUP_CONCAT(s.servicio SEPARATOR ', ') AS servicios,
             GROUP_CONCAT(s.idServicios) AS ids_servicios,
-            SUM(s.precio) AS precioTotal  -- <-- NUEVO: Suma el precio de todos los servicios de la cita
+            SUM(s.precio) AS precioTotal  
         FROM citas c
         INNER JOIN clientes cl ON c.clientes = cl.idClientes
         INNER JOIN usuarios u ON cl.idClientes = u.idUsuarios

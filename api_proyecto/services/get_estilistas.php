@@ -3,7 +3,6 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../db.php';
 global $conn;
 
-// idRol = 2 según tu tabla roles ("estilista")
 $sql = "SELECT u.idUsuarios AS idEstilistas, u.nombres, u.apellido 
         FROM usuarios u 
         INNER JOIN estilistas e ON u.idUsuarios = e.idEstilistas

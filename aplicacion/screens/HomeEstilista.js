@@ -16,7 +16,7 @@ import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
 import TimerServicio from "../components/TimerServicio";
 
-export default function StackScreens({ navigation }) {
+export default function HomeEstilista({ navigation }) {
   const [nombre, setNombre] = useState('');
   const [saludo, setSaludo] = useState('');
   const [fechaActual, setFechaActual] = useState('');
@@ -70,14 +70,6 @@ export default function StackScreens({ navigation }) {
     }
     
     setModalVisible(true);
-  };
-
-  const toggleSeleccionServicio = (idServicio) => {
-    if (serviciosSeleccionados.includes(idServicio)) {
-        setServiciosSeleccionados(serviciosSeleccionados.filter(id => id !== idServicio));
-    } else {
-        setServiciosSeleccionados([...serviciosSeleccionados, idServicio]);
-    }
   };
 
   const guardarCambiosServicios = async () => {
@@ -169,9 +161,9 @@ export default function StackScreens({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.body}>
-          <Text style={styles.saludo}>{saludo}, {nombre}</Text>
-          <Text style={styles.agenda}>{fechaActual}</Text>
+        <View style={styles.headerTitle}>
+          <Text style={styles.tituloPrincipal}>{saludo}, {nombre}</Text>
+          <Text style={styles.subtitulo}>{fechaActual}</Text>
           <Text style={styles.resumenTexto}>
             Tienes {citasHoy.length} {citasHoy.length === 1 ? 'cita programada' : 'citas programadas'} para hoy.
           </Text>
@@ -181,7 +173,7 @@ export default function StackScreens({ navigation }) {
           <Text style={styles.tituloSeccion}>Tus Turnos de Hoy</Text>
           
           {cargandoCitas ? (
-            <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color="#000000" style={{ marginTop: 20 }} />
           ) : citasHoy.length > 0 ? (
             citasHoy.map((cita) => {
               const duracionTexto = calcularDuracion(cita.horaInicioTs, cita.horaFinTs);
@@ -202,11 +194,11 @@ export default function StackScreens({ navigation }) {
                       </Text>
                     
                       <Text style={styles.textoPrecioTotal}>
-                        💰 Total: ${cita.precioTotal ? cita.precioTotal : '0'}
+                        Total: ${cita.precioTotal ? cita.precioTotal : '0'}
                       </Text>
                     
                       {duracionTexto && (
-                        <Text style={{color: '#81C784', fontWeight: 'bold', marginTop: 5}}>
+                        <Text style={styles.textoDuracion}>
                           ⏱️ Duración: {duracionTexto}
                         </Text>
                       )}
@@ -250,7 +242,7 @@ export default function StackScreens({ navigation }) {
             <Text style={styles.modalTitulo}>Gestionar Servicios</Text>
             <Text style={styles.modalSubtitulo}>Modifica los servicios asignados a este turno:</Text>
 
-            <Text style={styles.seccionTitulo}>📋 Servicios en la Cita:</Text>
+            <Text style={styles.seccionTituloModal}>📋 Servicios en la Cita:</Text>
             <ScrollView style={styles.listaContenedor}>
               {serviciosSeleccionados.length > 0 ? (
                 serviciosSeleccionados.map((idServ) => {
@@ -275,7 +267,7 @@ export default function StackScreens({ navigation }) {
               )}
             </ScrollView>
 
-            <Text style={[styles.seccionTitulo, { marginTop: 10 }]}>➕ Agregar del Catálogo:</Text>
+            <Text style={[styles.seccionTituloModal, { marginTop: 15 }]}>➕ Agregar del Catálogo:</Text>
             <ScrollView style={styles.listaContenedor}>
               {serviciosCatalogo
                 .filter(serv => !serviciosSeleccionados.includes(serv.idServicios))
@@ -320,121 +312,130 @@ export default function StackScreens({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e1cec2",
+    backgroundColor: "#FFFFFF",
   },
   scrollContent: {
     paddingTop: 15,
-    paddingBottom: 30,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
   },
-  body: {
-    backgroundColor: "#efb7da",
-    marginHorizontal: 15,
-    borderRadius: 15,
-    paddingVertical: 25,
-    paddingHorizontal: 15,
+  headerTitle: {
     marginBottom: 20,
-    justifyContent: 'center', 
-    alignItems: 'center',
-    elevation: 3,
   },
-  saludo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: "center",
-    color: '#B8838A',
-    marginBottom: 5,
+  tituloPrincipal: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 0.5,
   },
-  agenda: {
-    fontSize: 16,
-    textAlign: "center",
-    color: '#4A4A4A',
-    textTransform: 'capitalize',
-    marginBottom: 15,
-  },
-  resumenTexto: {
+  subtitulo: {
     fontSize: 14,
-    color: '#8D8B94',
+    color: '#333333',
+    marginTop: 2,
+    textTransform: 'capitalize',
     fontWeight: '600',
   },
+  resumenTexto: {
+    fontSize: 13,
+    color: '#666666',
+    marginTop: 4,
+  },
   agendaContainer: {
-    marginHorizontal: 15,
     marginBottom: 20,
   },
   tituloSeccion: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontWeight: '900',
+    color: '#000000',
     marginBottom: 15,
+    letterSpacing: 0.5,
   },
   tarjetaCita: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 15,
     padding: 15,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2,
-    borderLeftWidth: 4,
-    borderLeftColor: '#B8838A',
   },
   zonaNavegable: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   horaContainer: {
-    width: 60,
+    width: 65,
     borderRightWidth: 1,
-    borderRightColor: '#F0F0F0',
+    borderRightColor: '#EEEEEE',
     marginRight: 15,
+    justifyContent: 'center',
   },
   textoHora: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontWeight: '900',
+    color: '#000000',
   },
   infoContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   textoCliente: {
-    fontSize: 16,
-    color: '#4A4A4A',
-    fontWeight: '600',
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   tarjetaVacia: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: '#FAFAFA',
     borderRadius: 12,
-    padding: 20,
+    padding: 30,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e6d3c6',
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
+    marginTop: 10,
   },
   textoVacio: {
-    color: '#8D8B94',
+    color: '#666666',
     fontStyle: 'italic',
+    fontSize: 14,
   },
   textoServicios: {
     fontSize: 13,
-    color: '#8D8B94',
-    marginTop: 2,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  textoDuracion: {
+    color: '#2E7D32',
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginTop: 4,
   },
   accionesFila: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    paddingTop: 10,
+    borderTopColor: '#EEEEEE',
+    paddingTop: 12,
     width: '100%',
   },
   botonEditarServicios: {
-    backgroundColor: '#efb7da',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   textoBotonEditar: {
     fontSize: 12,
-    color: '#4A4A4A',
+    color: '#000000',
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -447,88 +448,83 @@ const styles = StyleSheet.create({
     width: '90%',
     maxHeight: '80%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    borderRadius: 12,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
     elevation: 5,
   },
   modalTitulo: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontWeight: '900',
+    color: '#000000',
     marginBottom: 5,
     textAlign: 'center',
   },
   modalSubtitulo: {
     fontSize: 13,
-    color: '#666',
-    marginBottom: 15,
+    color: '#666666',
+    marginBottom: 20,
     textAlign: 'center',
-  },
-  modalScroll: {
-    marginVertical: 10,
   },
   modalBotonesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    marginTop: 20,
   },
   modalBoton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
   },
   botonCancelarModal: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   botonGuardarModal: {
-    backgroundColor: '#B8838A',
+    backgroundColor: '#000000',
   },
   textoBotonCancelar: {
-    color: '#4A4A4A',
+    color: '#333333',
     fontWeight: 'bold',
   },
   textoBotonGuardar: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-  seccionTitulo: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#B8838A',
-    marginBottom: 5,
-  },
-  contenedorSeccionLista: {
-    maxHeight: 730,
-    marginBottom: 10,
-    backgroundColor: '#F9F9F9',
-    borderRadius: 8,
-    padding: 5,
+  seccionTituloModal: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#000000',
+    marginBottom: 8,
   },
   filaServicioActual: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    borderBottomColor: '#EEEEEE',
   },
   textoServicioActual: {
     fontSize: 14,
-    color: '#4A4A4A',
+    color: '#333333',
     fontWeight: '600',
     flex: 1,
   },
   botonEliminar: {
     backgroundColor: '#FFEBEE',
-    paddingVertical: 5,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
   textoBotonEliminar: {
-    color: '#D32F2F',
+    color: '#C62828',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -537,17 +533,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EEEEEE',
   },
   textoServicioModal: {
     fontSize: 14,
-    color: '#4A4A4A',
+    color: '#333333',
+    fontWeight: '500',
   },
   precioServicioModal: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#666666',
   },
   botonAgregar: {
     backgroundColor: '#E8F5E9',
@@ -556,31 +553,29 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   textoBotonAgregar: {
-    color: '#388E3C',
+    color: '#2E7D32',
     fontSize: 12,
     fontWeight: 'bold',
   },
   textoVacioModal: {
     fontSize: 13,
-    color: '#888',
+    color: '#666666',
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 10,
+    padding: 15,
   },
   listaContenedor: {
-    maxHeight: 130,      
-    marginBottom: 5,
-    backgroundColor: '#F9F9F9',
+    maxHeight: 140,      
+    backgroundColor: '#FAFAFA',
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#EEEEEE',
   },
   textoPrecioTotal: {
     fontSize: 14,
-    color: '#2E7D32',
-    fontWeight: 'bold',
+    color: '#000000',
+    fontWeight: '900',
     marginTop: 4,
   },
 });

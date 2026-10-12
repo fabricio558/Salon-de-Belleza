@@ -15,13 +15,11 @@ if (!$idCitas || !is_array($servicios)) {
 $conn->begin_transaction();
 
 try {
-    // 1. Eliminar servicios anteriores asociados a la cita
     $stmtDel = $conn->prepare("DELETE FROM citas_servicios WHERE citas_idCitas = ?");
     $stmtDel->bind_param("i", $idCitas);
     $stmtDel->execute();
     $stmtDel->close();
 
-    // 2. Insertar los nuevos servicios seleccionados con su precio histórico actual
     if (count($servicios) > 0) {
         $stmtIns = $conn->prepare("INSERT INTO citas_servicios (citas_idCitas, servicios_idServicios, cantidad, precioHistorico) 
                                    VALUES (?, ?, 1, (SELECT precio FROM services WHERE idServicios = ?))");

@@ -10,7 +10,6 @@ if (!$id_estilista) {
     exit;
 }
 
-// Unimos citas con clientes y usuarios, y separamos fechaHora en fecha y hora formateadas
 $sql = "SELECT 
             c.idCitas,
             c.clientes AS idClientes,

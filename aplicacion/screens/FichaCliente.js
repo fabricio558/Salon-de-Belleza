@@ -37,7 +37,6 @@ export default function FichaCliente({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      
       <Header navigation={navigation} />
 
       <ScrollView 
@@ -50,9 +49,9 @@ export default function FichaCliente({ navigation }) {
           </View>
 
           {cargando ? (
-            <ActivityIndicator size="large" color="#B8838A" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color="#000000" style={{ marginTop: 20 }} />
           ) : !cliente ? (
-            <Text style={{ textAlign: 'center', marginTop: 20, color: '#8E6E73' }}>
+            <Text style={styles.textoVacio}>
               Por favor seleccione un cliente desde la Agenda para ver su ficha.
             </Text>
           ) : (
@@ -90,13 +89,68 @@ export default function FichaCliente({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#e1cec2" },
-  scrollContent: { paddingTop: 15, paddingBottom: 30 },
-  cuerpo: { backgroundColor: "#F9F3EE", marginHorizontal: 15, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#E2D2C6" },
-  usuarioLista: { backgroundColor: "transparent", marginBottom: 10, paddingVertical: 6, alignItems: "center" },
-  textoLista: { color: "#B8838A", fontSize: 18, fontWeight: "bold", letterSpacing: 1 },
-  tarjetaUsuario: { backgroundColor: "#FFFFFF", marginBottom: 12, padding: 14, borderRadius: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 2 },
-  campoContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAF6F3", paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, marginBottom: 6 },
-  etiqueta: { fontWeight: "bold", fontSize: 14, color: "#8E6E73" },
-  valor: { fontSize: 14, color: "#4A4A4A" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#FFFFFF" 
+  },
+  scrollContent: { 
+    paddingTop: 15, 
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  cuerpo: { 
+    backgroundColor: "#FFFFFF", 
+    borderRadius: 12, 
+    padding: 20, 
+    borderWidth: 1, 
+    borderColor: "#EEEEEE",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  usuarioLista: { 
+    marginBottom: 15, 
+    paddingVertical: 6, 
+    alignItems: "center" 
+  },
+  textoLista: { 
+    color: "#000000", 
+    fontSize: 22, 
+    fontWeight: "900", 
+    letterSpacing: 0.5 
+  },
+  tarjetaUsuario: { 
+    backgroundColor: "#FFFFFF", 
+    borderRadius: 8,
+  },
+  campoContainer: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    backgroundColor: "#FAFAFA", 
+    paddingVertical: 12, 
+    paddingHorizontal: 15, 
+    borderRadius: 8, 
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  etiqueta: { 
+    fontWeight: "900", 
+    fontSize: 14, 
+    color: "#000000" 
+  },
+  valor: { 
+    fontSize: 14, 
+    color: "#333333",
+    fontWeight: "500",
+  },
+  textoVacio: {
+    textAlign: 'center', 
+    marginTop: 20, 
+    color: '#666666',
+    fontStyle: 'italic',
+  },
 });

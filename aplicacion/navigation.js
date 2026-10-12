@@ -13,9 +13,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeEstilista from "./screens/HomeEstilista";
 import AgendaSemanal from "./screens/AgendaSemanal";
 import InicioSesion from "./screens/InicioSesion";
+import BienvenidaCliente from "./screens/BienvenidaCliente";
+import HomeCliente from "./screens/HomeCliente"; 
 import FichaCliente from "./screens/FichaCliente";
 import CrearCita from "./screens/CrearCita";
-import AgendaDiaria from "./screens/AgendaDiaria";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -28,11 +29,11 @@ function PantallaCarga({ navigation }) {
         if (session !== null) {
           navigation.replace('MainDrawer');
         } else {
-          navigation.replace('Login');
+          navigation.replace('Bienvenida');
         }
       } catch (error) {
         console.log("Error revisando sesión", error);
-        navigation.replace('Login');
+        navigation.replace('Bienvenida');
       }
     };
 
@@ -40,8 +41,8 @@ function PantallaCarga({ navigation }) {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e6d3c6' }}>
-      <ActivityIndicator size="large" color="#B8838A" />
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+      <ActivityIndicator size="large" color="#000000" />
     </View>
   );
 }
@@ -53,7 +54,7 @@ function CustomDrawerContent(props) {
       
       props.navigation.reset({
         index: 0,
-        routes: [{ name: 'Login' }],
+        routes: [{ name: 'Bienvenida' }],
       });
     } catch (error) {
       console.log("Error al cerrar sesión", error);
@@ -96,8 +97,8 @@ function MyDrawer() {
 
   if (cargandoRol) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e6d3c6' }}>
-        <ActivityIndicator size="large" color="#B8838A" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#000000" />
       </View>
     );
   }
@@ -108,11 +109,11 @@ function MyDrawer() {
       screenOptions={{
         headerShown: false,
         drawerStyle: {
-          backgroundColor: '#e6d3c6', 
+          backgroundColor: '#FFFFFF', 
           width: 240,
         },
-        drawerActiveTintColor: '#B8838A',
-        drawerInactiveTintColor: '#8D8B94',
+        drawerActiveTintColor: '#000000',
+        drawerInactiveTintColor: '#666666',
       }}
     >
       {rol === 2 && (
@@ -125,8 +126,8 @@ function MyDrawer() {
 
       {rol === 1 && (
         <>
+          <Drawer.Screen name="Inicio" component={HomeCliente} />
           <Drawer.Screen name="Crear Cita" component={CrearCita} />
-          <Drawer.Screen name="Inicio" component={AgendaDiaria}/>
         </>
       )}
     </Drawer.Navigator>
@@ -138,6 +139,7 @@ export default function Navigation() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Cargando" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Cargando" component={PantallaCarga} />
+        <Stack.Screen name="Bienvenida" component={BienvenidaCliente} />
         <Stack.Screen name="Login" component={InicioSesion} />
         <Stack.Screen name="MainDrawer" component={MyDrawer} />
       </Stack.Navigator>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-export default function Header({ navigation, titulo = "Mandala", subtitulo = "Tu Centro de Belleza de Confianza" }) {
+export default function Header({ navigation, titulo = "MANDALA", subtitulo }) {
   return (
     <View style={styles.header}>
       <Pressable 
@@ -13,7 +13,7 @@ export default function Header({ navigation, titulo = "Mandala", subtitulo = "Tu
 
       <View style={styles.headerTitleContainer}>
         <Text style={styles.title}>{titulo}</Text>
-        <Text style={styles.subtitle}>{subtitulo}</Text>
+        {subtitulo ? <Text style={styles.subtitle}>{subtitulo}</Text> : null}
       </View>
     </View>
   );
@@ -21,37 +21,39 @@ export default function Header({ navigation, titulo = "Mandala", subtitulo = "Tu
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 20,
-    backgroundColor: '#e6d3c6',
+    height: 60,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row', 
     alignItems: 'center',
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    elevation: 2,
     zIndex: 1,
-    elevation: 3,
   },
   hamburgerButton: {
-    padding: 8,
+    padding: 5,
     marginRight: 10,
   },
   hamburgerIcon: {
-    fontSize: 26,
-    color: '#B8838A',
+    fontSize: 24,
+    color: '#000000',
     fontWeight: 'bold',
   },
   headerTitleContainer: {
     flex: 1,
     alignItems: 'center',
-    marginRight: 30, 
+    marginRight: 35, 
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 2,
   },
   subtitle: {
-    fontSize: 13,
-    color: '#8D8B94',
+    fontSize: 12,
+    color: '#666666',
     marginTop: 2,
   }
 });

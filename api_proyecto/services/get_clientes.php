@@ -3,7 +3,6 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../db.php'; 
 global $conn;
 
-// Convertimos a entero para limpiar el parámetro id
 $id_clientes = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id_clientes <= 0) {

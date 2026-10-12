@@ -57,45 +57,59 @@ export default function InicioSesion({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#e6d3c6" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.header}>
-        <Text style={styles.title}>Mandala</Text>
-        <Text style={styles.subtitle}>Tu Centro de Belleza de Confianza</Text>
+      <View style={styles.navBar}>
+        <Pressable onPress={() => navigation.navigate('Bienvenida')}>
+          <Text style={styles.logoTexto}>MANDALA</Text>
+        </Pressable>
+        <Pressable 
+          onPress={() => navigation.navigate('Bienvenida')} 
+          style={styles.navBtnVolver}
+        >
+          <Text style={styles.navBtnVolverText}>← Volver</Text>
+        </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>INICIAR SESIÓN</Text>
+          <Text style={styles.cardSub}>Ingresa tus credenciales para acceder a tu cuenta.</Text>
             
-            <TextInput
-              style={styles.input}
-              placeholder="Correo Electrónico"
-              placeholderTextColor="#8D8B94"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={correo}
-              onChangeText={setCorreo}
-            />
+          <TextInput
+            style={styles.input}
+            placeholder="Correo Electrónico"
+            placeholderTextColor="#888888"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={correo}
+            onChangeText={setCorreo}
+          />
+        
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor="#888888"
+            secureTextEntry={true}
+            autoCapitalize="none"
+            value={contrasena}
+            onChangeText={setContrasena}
+          />
           
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              placeholderTextColor="#8D8B94"
-              secureTextEntry={true}
-              autoCapitalize="none"
-              value={contrasena}
-              onChangeText={setContrasena}
-            />
-            
           <Pressable
             style={styles.button}
             onPress={login}
           >
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            <Text style={styles.buttonText}>INGRESAR</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.buttonRegistroLink}
+            onPress={() => navigation.navigate('Registro')}
+          >
+            <Text style={styles.textRegistroLink}>¿No tienes una cuenta? <Text style={{fontWeight: 'bold', color: '#000000'}}>Regístrate</Text></Text>
           </Pressable>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -104,67 +118,95 @@ export default function InicioSesion({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e1cec2",
+    backgroundColor: "#FFFFFF",
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 20,
-    backgroundColor: '#e6d3c6',
+  navBar: {
+    height: 60,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 3,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  title: {
-    fontSize: 28,
+  logoTexto: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 2,
+  },
+  navBtnVolver: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  navBtnVolverText: {
     fontWeight: 'bold',
-    color: '#B8838A',
-  },
-  subtitle: {
+    color: '#666666',
     fontSize: 14,
-    color: '#8D8B94',
-    marginTop: 5,
   },
   content: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#f6e8e8',
-    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: 25,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#B8838A',
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#000000',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    marginBottom: 5,
+  },
+  cardSub: {
+    fontSize: 13,
+    color: '#666666',
     textAlign: 'center',
     marginBottom: 25,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
     paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#232226',
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#000000',
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#e6d3c6',
+    borderColor: '#E0E0E0',
   },
   button: {
-    backgroundColor: '#B8838A',
-    borderRadius: 10,
+    backgroundColor: '#000000',
+    borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 5,
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  buttonRegistroLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  textRegistroLink: {
+    color: '#666666',
+    fontSize: 13,
   },
 });
