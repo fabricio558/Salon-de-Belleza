@@ -6,7 +6,8 @@ import {
   Pressable, 
   ScrollView, 
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +20,70 @@ export default function AgendaSemanal({ navigation }) {
   const [citasAgrupadas, setCitasAgrupadas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [totalCitas, setTotalCitas] = useState(0);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [serviciosCatalogo, setServiciosCatalogo] = useState([]);
+  const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
+  const [citaSeleccionadaId, setCitaSeleccionadaId] = useState(null);
+
+  const cargarCatalogoServicios = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/router.php?action=get_servicios`);
+      if (response.data && response.data.success) {
+        setServiciosCatalogo(response.data.data);
+      }
+    } catch (error) {
+      console.log("Error cargando catálogo de servicios:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      cargarCatalogoServicios();
+    }, [])
+  );
+
+  const abrirModalEdicion = (cita) => {
+    setCitaSeleccionadaId(cita.idCitas);
+
+    if (cita.ids_servicios) {
+      const idsArray = cita.ids_servicios.split(',').map(id => parseInt(id, 10));
+      setServiciosSeleccionados(idsArray);
+    } else {
+      setServiciosSeleccionados([]);
+    }
+    
+    setModalVisible(true);
+  };
+
+  const guardarCambiosServicios = async () => {
+    try {
+      const url = `${BASE_URL}/router.php?action=update_servicios_cita`;
+      const response = await axios.post(url, {
+        idCitas: citaSeleccionadaId,
+        servicios: serviciosSeleccionados 
+      });
+
+      if (response.data && response.data.success) {
+        setModalVisible(false);
+        cargarAgenda(); 
+      } else {
+        console.log("Error al actualizar:", response.data.message);
+      }
+    } catch (error) {
+      console.log("Error de red al actualizar servicios:", error);
+    }
+  };
+
+  const agregarServicioACita = (idServicio) => {
+    if (!serviciosSeleccionados.includes(idServicio)) {
+      setServiciosSeleccionados([...serviciosSeleccionados, idServicio]);
+    }
+  };
+
+  const eliminarServicioDeCita = (idServicio) => {
+    setServiciosSeleccionados(serviciosSeleccionados.filter(id => id !== idServicio));
+  };
 
   const formatearFecha = (fechaString) => {
     const partes = fechaString.split('-'); 
@@ -121,35 +186,48 @@ export default function AgendaSemanal({ navigation }) {
               </View>
 
               {grupoDia.turnos.map((cita) => (
-              <View key={cita.idCitas} style={styles.tarjetaCita}>
-                
-                <Pressable 
-                  style={styles.zonaNavegable}
-                  onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
-                >
-                  <View style={styles.horaContainer}>
-                    <Text style={styles.textoHora}>{cita.hora}</Text>
-                  </View>
-            
-                  <View style={styles.infoContainer}>
-                    <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
-                    <View style={[styles.badgeEstado, { backgroundColor: obtenerColorEstado(cita.estado) }]}>
-                      <Text style={styles.textoEstado}>{cita.estado || 'Pendiente'}</Text>
+                <View key={cita.idCitas} style={styles.tarjetaCita}>
+                  
+                  <Pressable 
+                    style={styles.zonaNavegable}
+                    onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
+                  >
+                    <View style={styles.horaContainer}>
+                      <Text style={styles.textoHora}>{cita.hora}</Text>
                     </View>
-                    <Text style={styles.textoServicios}>
-                      {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
-                    </Text>
-                  </View>
-                </Pressable>
+              
+                    <View style={styles.infoContainer}>
+                      <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
+                      <View style={[styles.badgeEstado, { backgroundColor: obtenerColorEstado(cita.estado) }]}>
+                        <Text style={styles.textoEstado}>{cita.estado || 'Pendiente'}</Text>
+                      </View>
+                      <Text style={styles.textoServicios}>
+                        {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
+                      </Text>
 
-                <TimerServicio
-                idCitas={cita.idCitas}
-                horaInicioTs={cita.horaInicioTs}
-                horaFinTs={cita.horaFinTs}
-                onFinalizado={() => cargarAgenda()}
-                />
-              </View>
-            ))}
+                      <Text style={styles.textoPrecioTotal}>
+                        💰 Total: ${cita.precioTotal ? cita.precioTotal : '0'}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  <View style={styles.accionesFila}>
+                    <Pressable 
+                      style={styles.botonEditarServicios}
+                      onPress={() => abrirModalEdicion(cita)}
+                    >
+                      <Text style={styles.textoBotonEditar}>✏️ Modificar Servicios</Text>
+                    </Pressable>
+
+                    <TimerServicio
+                      idCitas={cita.idCitas}
+                      horaInicioTs={cita.horaInicioTs}
+                      horaFinTs={cita.horaFinTs}
+                      onFinalizado={() => cargarAgenda()}
+                    />
+                  </View>
+                </View>
+              ))}
             </View>
           ))
         ) : (
@@ -158,6 +236,81 @@ export default function AgendaSemanal({ navigation }) {
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>Gestionar Servicios</Text>
+            <Text style={styles.modalSubtitulo}>Modifica los servicios asignados a este turno:</Text>
+
+            <Text style={styles.seccionTitulo}>📋 Servicios en la Cita:</Text>
+            <ScrollView style={styles.listaContenedor}>
+              {serviciosSeleccionados.length > 0 ? (
+                serviciosSeleccionados.map((idServ) => {
+                  const servInfo = serviciosCatalogo.find(s => s.idServicios == idServ);
+                  
+                  return (
+                    <View key={idServ} style={styles.filaServicioActual}>
+                      <Text style={styles.textoServicioActual}>
+                        {servInfo ? servInfo.servicio : 'Cargando servicio...'}
+                      </Text>
+                      <Pressable 
+                        style={styles.botonEliminar} 
+                        onPress={() => eliminarServicioDeCita(idServ)}
+                      >
+                        <Text style={styles.textoBotonEliminar}>🗑️ Quitar</Text>
+                      </Pressable>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.textoVacioModal}>No hay servicios en esta cita.</Text>
+              )}
+            </ScrollView>
+
+            <Text style={[styles.seccionTitulo, { marginTop: 10 }]}>➕ Agregar del Catálogo:</Text>
+            <ScrollView style={styles.listaContenedor}>
+              {serviciosCatalogo
+                .filter(serv => !serviciosSeleccionados.includes(serv.idServicios))
+                .map((serv) => (
+                  <View key={serv.idServicios} style={styles.filaServicioCatalogo}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.textoServicioModal}>{serv.servicio}</Text>
+                      <Text style={styles.precioServicioModal}>${serv.precio}</Text>
+                    </View>
+                    <Pressable 
+                      style={styles.botonAgregar} 
+                      onPress={() => agregarServicioACita(serv.idServicios)}
+                    >
+                      <Text style={styles.textoBotonAgregar}>➕ Agregar</Text>
+                    </Pressable>
+                  </View>
+                ))}
+            </ScrollView>
+
+            <View style={styles.modalBotonesContainer}>
+              <Pressable 
+                style={[styles.modalBoton, styles.botonCancelarModal]} 
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textoBotonCancelar}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.modalBoton, styles.botonGuardarModal]} 
+                onPress={guardarCambiosServicios}
+              >
+                <Text style={styles.textoBotonGuardar}>Guardar Cambios</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -205,15 +358,17 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   tarjetaCita: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,
-    alignItems: 'center',
     elevation: 1,
     borderLeftWidth: 4,
     borderLeftColor: '#B8838A',
+  },
+  zonaNavegable: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   horaContainer: {
     width: 60,
@@ -265,30 +420,166 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 15,
   },
-
   textoServicios: {
-  fontSize: 13,
-  color: '#8D8B94',
-  marginTop: 2,
-},
-  tarjetaCita: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 12,
-  marginBottom: 10,
-  padding: 15,
-  elevation: 1,
-  borderLeftWidth: 4,
-  borderLeftColor: '#B8838A',
-  
-},
-zonaNavegable: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-horaContainer: {
-  width: 60,
-  borderRightWidth: 1,
-  borderRightColor: '#F0F0F0',
-  marginRight: 15,
-},
+    fontSize: 13,
+    color: '#8D8B94',
+    marginTop: 2,
+  },
+  accionesFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    paddingTop: 10,
+    width: '100%',
+  },
+  botonEditarServicios: {
+    backgroundColor: '#efb7da',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  textoBotonEditar: {
+    fontSize: 12,
+    color: '#4A4A4A',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitulo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#B8838A',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  modalSubtitulo: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalBotonesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+  },
+  modalBoton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  botonCancelarModal: {
+    backgroundColor: '#E0E0E0',
+  },
+  botonGuardarModal: {
+    backgroundColor: '#B8838A',
+  },
+  textoBotonCancelar: {
+    color: '#4A4A4A',
+    fontWeight: 'bold',
+  },
+  textoBotonGuardar: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  seccionTitulo: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#B8838A',
+    marginBottom: 5,
+  },
+  filaServicioActual: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
+  },
+  textoServicioActual: {
+    fontSize: 14,
+    color: '#4A4A4A',
+    fontWeight: '600',
+    flex: 1,
+  },
+  botonEliminar: {
+    backgroundColor: '#FFEBEE',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  textoBotonEliminar: {
+    color: '#D32F2F',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  filaServicioCatalogo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  textoServicioModal: {
+    fontSize: 14,
+    color: '#4A4A4A',
+  },
+  precioServicioModal: {
+    fontSize: 13,
+    color: '#888',
+  },
+  botonAgregar: {
+    backgroundColor: '#E8F5E9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  textoBotonAgregar: {
+    color: '#388E3C',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  textoVacioModal: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 10,
+  },
+  listaContenedor: {
+    maxHeight: 130,      
+    marginBottom: 5,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
+  textoPrecioTotal: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
 });

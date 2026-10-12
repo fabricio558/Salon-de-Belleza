@@ -6,7 +6,8 @@ import {
   Pressable, 
   ScrollView, 
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,11 +20,28 @@ export default function StackScreens({ navigation }) {
   const [nombre, setNombre] = useState('');
   const [saludo, setSaludo] = useState('');
   const [fechaActual, setFechaActual] = useState('');
-  
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [serviciosCatalogo, setServiciosCatalogo] = useState([]);
+  const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
+  const [citaSeleccionadaId, setCitaSeleccionadaId] = useState(null);
+
   const [citasHoy, setCitasHoy] = useState([]);
   const [cargandoCitas, setCargandoCitas] = useState(true);
 
+  const cargarCatalogoServicios = async () => {
+    try {
+        const response = await axios.get(`${BASE_URL}/router.php?action=get_servicios`);
+        if (response.data && response.data.success) {
+            setServiciosCatalogo(response.data.data);
+        }
+    } catch (error) {
+        console.log("Error cargando catálogo de servicios:", error);
+    }
+  };
+
   useEffect(() => {
+    cargarCatalogoServicios();
     const determinarSaludo = () => {
       const horaActual = new Date().getHours();
       if (horaActual >= 6 && horaActual < 12) setSaludo('Buenos días');
@@ -40,6 +58,56 @@ export default function StackScreens({ navigation }) {
     determinarSaludo();
     obtenerFecha();
   }, []);
+
+  const abrirModalEdicion = (cita) => {
+    setCitaSeleccionadaId(cita.idCitas);
+
+    if (cita.ids_servicios) {
+        const idsArray = cita.ids_servicios.split(',').map(id => parseInt(id, 10));
+        setServiciosSeleccionados(idsArray);
+    } else {
+        setServiciosSeleccionados([]);
+    }
+    
+    setModalVisible(true);
+  };
+
+  const toggleSeleccionServicio = (idServicio) => {
+    if (serviciosSeleccionados.includes(idServicio)) {
+        setServiciosSeleccionados(serviciosSeleccionados.filter(id => id !== idServicio));
+    } else {
+        setServiciosSeleccionados([...serviciosSeleccionados, idServicio]);
+    }
+  };
+
+  const guardarCambiosServicios = async () => {
+    try {
+        const url = `${BASE_URL}/router.php?action=update_servicios_cita`;
+        const response = await axios.post(url, {
+            idCitas: citaSeleccionadaId,
+            servicios: serviciosSeleccionados 
+        });
+
+        if (response.data && response.data.success) {
+            setModalVisible(false);
+            cargarDatos(); 
+        } else {
+            console.log("Error al actualizar:", response.data.message);
+        }
+    } catch (error) {
+        console.log("Error de red al actualizar servicios:", error);
+    }
+  };
+
+  const agregarServicioACita = (idServicio) => {
+    if (!serviciosSeleccionados.includes(idServicio)) {
+        setServiciosSeleccionados([...serviciosSeleccionados, idServicio]);
+    }
+  };
+
+  const eliminarServicioDeCita = (idServicio) => {
+    setServiciosSeleccionados(serviciosSeleccionados.filter(id => id !== idServicio));
+  };
 
   const calcularDuracion = (inicioTs, finTs) => {
     if (!inicioTs || !finTs) return null;
@@ -120,7 +188,6 @@ export default function StackScreens({ navigation }) {
 
               return (
                 <View key={cita.idCitas} style={styles.tarjetaCita}>
-                
                   <Pressable 
                     style={styles.zonaNavegable}
                     onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
@@ -133,7 +200,11 @@ export default function StackScreens({ navigation }) {
                       <Text style={styles.textoServicios}>
                         {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
                       </Text>
-
+                    
+                      <Text style={styles.textoPrecioTotal}>
+                        💰 Total: ${cita.precioTotal ? cita.precioTotal : '0'}
+                      </Text>
+                    
                       {duracionTexto && (
                         <Text style={{color: '#81C784', fontWeight: 'bold', marginTop: 5}}>
                           ⏱️ Duración: {duracionTexto}
@@ -142,13 +213,21 @@ export default function StackScreens({ navigation }) {
                     </View>
                   </Pressable>
 
-                  <TimerServicio
-                    idCitas={cita.idCitas}
-                    horaInicioTs={cita.horaInicioTs}
-                    horaFinTs={cita.horaFinTs}
-                    onFinalizado={() => cargarDatos()} 
-                  />
-                  
+                  <View style={styles.accionesFila}>
+                    <Pressable 
+                      style={styles.botonEditarServicios}
+                      onPress={() => abrirModalEdicion(cita)}
+                    >
+                      <Text style={styles.textoBotonEditar}>✏️ Modificar Servicios</Text>
+                    </Pressable>
+
+                    <TimerServicio
+                      idCitas={cita.idCitas}
+                      horaInicioTs={cita.horaInicioTs}
+                      horaFinTs={cita.horaFinTs}
+                      onFinalizado={() => cargarDatos()} 
+                    />
+                  </View>
                 </View>
               );
             })
@@ -159,6 +238,81 @@ export default function StackScreens({ navigation }) {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>Gestionar Servicios</Text>
+            <Text style={styles.modalSubtitulo}>Modifica los servicios asignados a este turno:</Text>
+
+            <Text style={styles.seccionTitulo}>📋 Servicios en la Cita:</Text>
+            <ScrollView style={styles.listaContenedor}>
+              {serviciosSeleccionados.length > 0 ? (
+                serviciosSeleccionados.map((idServ) => {
+                  const servInfo = serviciosCatalogo.find(s => s.idServicios == idServ);
+                  
+                  return (
+                    <View key={idServ} style={styles.filaServicioActual}>
+                      <Text style={styles.textoServicioActual}>
+                        {servInfo ? servInfo.servicio : 'Cargando servicio...'}
+                      </Text>
+                      <Pressable 
+                        style={styles.botonEliminar} 
+                        onPress={() => eliminarServicioDeCita(idServ)}
+                      >
+                        <Text style={styles.textoBotonEliminar}>🗑️ Quitar</Text>
+                      </Pressable>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.textoVacioModal}>No hay servicios en esta cita.</Text>
+              )}
+            </ScrollView>
+
+            <Text style={[styles.seccionTitulo, { marginTop: 10 }]}>➕ Agregar del Catálogo:</Text>
+            <ScrollView style={styles.listaContenedor}>
+              {serviciosCatalogo
+                .filter(serv => !serviciosSeleccionados.includes(serv.idServicios))
+                .map((serv) => (
+                  <View key={serv.idServicios} style={styles.filaServicioCatalogo}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.textoServicioModal}>{serv.servicio}</Text>
+                      <Text style={styles.precioServicioModal}>${serv.precio}</Text>
+                    </View>
+                    <Pressable 
+                      style={styles.botonAgregar} 
+                      onPress={() => agregarServicioACita(serv.idServicios)}
+                    >
+                      <Text style={styles.textoBotonAgregar}>➕ Agregar</Text>
+                    </Pressable>
+                  </View>
+                ))}
+            </ScrollView>
+
+            <View style={styles.modalBotonesContainer}>
+              <Pressable 
+                style={[styles.modalBoton, styles.botonCancelarModal]} 
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textoBotonCancelar}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.modalBoton, styles.botonGuardarModal]} 
+                onPress={guardarCambiosServicios}
+              >
+                <Text style={styles.textoBotonGuardar}>Guardar Cambios</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -213,15 +367,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   tarjetaCita: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,
-    alignItems: 'center',
     elevation: 2,
     borderLeftWidth: 4,
     borderLeftColor: '#B8838A',
+  },
+  zonaNavegable: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   horaContainer: {
     width: 60,
@@ -255,22 +411,176 @@ const styles = StyleSheet.create({
     color: '#8D8B94',
     fontStyle: 'italic',
   },
-  button: {
-    backgroundColor: "#1295e0",
-    justifyContent: "center",
-    alignItems: "center",
-    height: 45,
-    marginHorizontal: 15,
-    borderRadius: 15,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
-
   textoServicios: {
-  fontSize: 13,
-  color: '#8D8B94',
-  marginTop: 2,
-},
+    fontSize: 13,
+    color: '#8D8B94',
+    marginTop: 2,
+  },
+  accionesFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    paddingTop: 10,
+    width: '100%',
+  },
+  botonEditarServicios: {
+    backgroundColor: '#efb7da',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  textoBotonEditar: {
+    fontSize: 12,
+    color: '#4A4A4A',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitulo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#B8838A',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  modalSubtitulo: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalScroll: {
+    marginVertical: 10,
+  },
+  modalBotonesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+  },
+  modalBoton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  botonCancelarModal: {
+    backgroundColor: '#E0E0E0',
+  },
+  botonGuardarModal: {
+    backgroundColor: '#B8838A',
+  },
+  textoBotonCancelar: {
+    color: '#4A4A4A',
+    fontWeight: 'bold',
+  },
+  textoBotonGuardar: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  seccionTitulo: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#B8838A',
+    marginBottom: 5,
+  },
+  contenedorSeccionLista: {
+    maxHeight: 730,
+    marginBottom: 10,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    padding: 5,
+  },
+  filaServicioActual: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
+  },
+  textoServicioActual: {
+    fontSize: 14,
+    color: '#4A4A4A',
+    fontWeight: '600',
+    flex: 1,
+  },
+  botonEliminar: {
+    backgroundColor: '#FFEBEE',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  textoBotonEliminar: {
+    color: '#D32F2F',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  filaServicioCatalogo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  textoServicioModal: {
+    fontSize: 14,
+    color: '#4A4A4A',
+  },
+  precioServicioModal: {
+    fontSize: 13,
+    color: '#888',
+  },
+  botonAgregar: {
+    backgroundColor: '#E8F5E9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  textoBotonAgregar: {
+    color: '#388E3C',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  textoVacioModal: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 10,
+  },
+  listaContenedor: {
+    maxHeight: 130,      
+    marginBottom: 5,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
+  textoPrecioTotal: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
 });

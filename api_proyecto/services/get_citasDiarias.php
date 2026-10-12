@@ -5,7 +5,6 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../db.php'; 
-
 global $conn;
 
 $idEstilistas = $_GET['id_estilistas'] ?? '';
@@ -24,7 +23,9 @@ $sql = "SELECT
             c.estado_cita_idEstado AS estado,
             u.nombres,
             u.apellido,
-            GROUP_CONCAT(s.servicio SEPARATOR ', ') AS servicios
+            GROUP_CONCAT(s.servicio SEPARATOR ', ') AS servicios,
+            GROUP_CONCAT(s.idServicios) AS ids_servicios,
+            SUM(s.precio) AS precioTotal  -- <-- NUEVO: Suma el precio de todos los servicios de la cita
         FROM citas c
         INNER JOIN clientes cl ON c.clientes = cl.idClientes
         INNER JOIN usuarios u ON cl.idClientes = u.idUsuarios

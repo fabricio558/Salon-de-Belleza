@@ -29,6 +29,8 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/iniciar_servicio.php");
         } elseif ($action === 'finalizar_servicio') {    
             include("services/finalizar_servicio.php");
+        } elseif ($action === 'update_servicios_cita') {    
+            include("services/update_servicios_cita.php");
         } else {
             include ("services/post.php");
         }
