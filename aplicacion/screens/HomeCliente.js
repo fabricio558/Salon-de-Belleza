@@ -47,7 +47,7 @@ export default function HomeCliente({ navigation }) {
               <Text style={styles.heroTag}>BIENVENIDO</Text>
               <Text style={styles.heroTitulo}>RENOVÁ TU ESTILO</Text>
               <Text style={styles.heroSubtitulo}>Reserva tu turno de manera rápida y disfruta de nuestros servicios exclusivos.</Text>
-              <Pressable style={styles.heroBoton} onPress={() => navigation.navigate('Crear Cita')}>
+              <Pressable style={styles.heroBoton} onPress={() => navigation.navigate('Reservar Cita')}>
                 <Text style={styles.heroBotonTexto}>RESERVAR UN TURNO →</Text>
               </Pressable>
             </View>

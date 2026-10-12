@@ -18,6 +18,7 @@ $sql = "SELECT
             u.nombres, 
             u.apellido, 
             u.correo, 
+            u.contrasena, 
             u.fechaNacimiento, 
             c.notaAlergias, 
             c.notaPreferencias 
