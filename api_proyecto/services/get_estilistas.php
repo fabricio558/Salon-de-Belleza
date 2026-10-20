@@ -3,7 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../db.php';
 global $conn;
 
-$sql = "SELECT u.idUsuarios AS idEstilistas, u.nombres, u.apellido 
+$sql = "SELECT u.idUsuarios AS idEstilistas, u.nombres, u.apellido, u.foto 
         FROM usuarios u 
         INNER JOIN estilistas e ON u.idUsuarios = e.idEstilistas
         WHERE u.idRol = 2

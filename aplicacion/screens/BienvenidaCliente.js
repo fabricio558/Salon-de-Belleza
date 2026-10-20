@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Image, ActivityIndicator } from "react-native";
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
+import ServicioItem from '../components/ServicioItem';
+import EstilistaItem from '../components/EstilistaItem';
 
 export default function BienvenidaCliente({ navigation }) {
   const [servicios, setServicios] = useState([]);
@@ -98,10 +100,12 @@ export default function BienvenidaCliente({ navigation }) {
             <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
           ) : servicios.length > 0 ? (
             servicios.map((serv) => (
-              <View key={serv.idServicios} style={styles.filaServicio}>
-                <Text style={styles.nombreServicio}>{serv.servicio}</Text>
-                <Text style={styles.precioServicio}>${serv.precio}</Text>
-              </View>
+              <ServicioItem 
+                key={serv.idServicios}
+                servicio={serv.servicio}
+                precio={serv.precio}
+                imagenUrl={serv.imagenUrl}
+              />
             ))
           ) : (
             <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
@@ -112,16 +116,12 @@ export default function BienvenidaCliente({ navigation }) {
           <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
           {estilistas.length > 0 ? (
             estilistas.map((est) => (
-              <View key={est.idEstilistas || est.idUsuarios || est.id} style={styles.filaEstilista}>
-                <Image 
-                  source={{ uri: est.foto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300' }} 
-                  style={styles.avatarEstilista} 
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.nombreEstilista}>{est.nombres} {est.apellido}</Text>
-                  <Text style={styles.rolEstilista}>Especialista Profesional</Text>
-                </View>
-              </View>
+              <EstilistaItem 
+                key={est.idEstilistas || est.idUsuarios || est.id}
+                nombres={est.nombres}
+                apellido={est.apellido}
+                foto={est.foto}
+              />
             ))
           ) : (
             <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
@@ -277,46 +277,6 @@ const styles = StyleSheet.create({
   seccionCatalogo: {
     paddingHorizontal: 20,
     marginBottom: 30,
-  },
-  filaServicio: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  nombreServicio: {
-    fontSize: 15,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  precioServicio: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  filaEstilista: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  avatarEstilista: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
-    backgroundColor: '#E0E0E0',
-    marginRight: 15,
-  },
-  nombreEstilista: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  rolEstilista: {
-    fontSize: 13,
-    color: '#777777',
   },
   textoVacio: {
     color: '#888888',

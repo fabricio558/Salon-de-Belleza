@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Image, Act
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
+import ServicioItem from "../components/ServicioItem";
+import EstilistaItem from "../components/EstilistaItem";
 
 export default function HomeCliente({ navigation }) {
   const [servicios, setServicios] = useState([]);
@@ -84,40 +86,39 @@ export default function HomeCliente({ navigation }) {
         </ScrollView>
 
         <View style={styles.seccionCatalogo}>
-          <Text style={styles.tituloSeccion}>SERVICIOS DISPONIBLES</Text>
-          {cargando ? (
-            <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
-          ) : servicios.length > 0 ? (
-            servicios.map((serv) => (
-              <View key={serv.idServicios} style={styles.filaServicio}>
-                <Text style={styles.nombreServicio}>{serv.servicio}</Text>
-                <Text style={styles.precioServicio}>${serv.precio}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
-          )}
-        </View>
-
-        <View style={styles.seccionCatalogo}>
-          <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
-          {estilistas.length > 0 ? (
-            estilistas.map((est) => (
-              <View key={est.idEstilistas || est.idUsuarios || est.id} style={styles.filaEstilista}>
-                <Image 
-                  source={{ uri: est.foto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300' }} 
-                  style={styles.avatarEstilista} 
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.nombreEstilista}>{est.nombres} {est.apellido}</Text>
-                  <Text style={styles.rolEstilista}>Especialista Profesional</Text>
+                  <Text style={styles.tituloSeccion}>SERVICIOS DISPONIBLES</Text>
+                  {cargando ? (
+                    <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
+                  ) : servicios.length > 0 ? (
+                    servicios.map((serv) => (
+                      <ServicioItem 
+                        key={serv.idServicios}
+                        servicio={serv.servicio}
+                        precio={serv.precio}
+                        imagenUrl={serv.imagenUrl}
+                      />
+                    ))
+                  ) : (
+                    <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
+                  )}
                 </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
-          )}
-        </View>
+        
+                <View style={styles.seccionCatalogo}>
+                  <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
+                  {estilistas.length > 0 ? (
+                    estilistas.map((est) => (
+                      <EstilistaItem 
+                        key={est.idEstilistas || est.idUsuarios || est.id}
+                        nombres={est.nombres}
+                        apellido={est.apellido}
+                        foto={est.foto}
+                      />
+                    ))
+                  ) : (
+                    <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
+                  )}
+                </View>
+        
       </ScrollView>
     </SafeAreaView>
   );
