@@ -2,13 +2,33 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Image, ActivityIndicator } from "react-native";
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
-import ServicioItem from '../components/ServicioItem';
-import EstilistaItem from '../components/EstilistaItem';
+import Header from "../components/header";
+import ServicioItem from "../components/ServicioItem";
+import EstilistaItem from "../components/EstilistaItem";
+import TarjetaGaleria from "../components/TarjetaGaleria"; 
 
 export default function BienvenidaCliente({ navigation }) {
   const [servicios, setServicios] = useState([]);
   const [estilistas, setEstilistas] = useState([]);
   const [cargando, setCargando] = useState(true);
+
+  const itemsGaleria = [
+    {
+      id: '1',
+      titulo: 'Alisado Progresivo',
+      imagen: require('../img/alisado.png'),
+    },
+    {
+      id: '2',
+      titulo: 'Coloración',
+      imagen: require('../img/coloracion.png'),
+    },
+    {
+      id: '3',
+      titulo: 'Peinado y Modelado',
+      imagen: require('../img/peinado.png'),
+    },
+  ];
 
   const cargarDatosPublicos = async () => {
     try {
@@ -66,67 +86,53 @@ export default function BienvenidaCliente({ navigation }) {
         </View>
 
         <View style={styles.seccionHeader}>
-          <Text style={styles.tituloSeccion}>INSPIRACIÓN & TENDENCIAS</Text>
-          <Text style={styles.subtituloSeccion}>Explora nuestros trabajos recientes</Text>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galeriaHorizontal}>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
-            />
-            <Text style={styles.tituloGaleria}>Cortes & Styling</Text>
-          </View>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
-            />
-            <Text style={styles.tituloGaleria}>Coloración Avanzada</Text>
-          </View>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
-            />
-            <Text style={styles.tituloGaleria}>Tratamientos Spa</Text>
-          </View>
-        </ScrollView>
-
-        <View style={styles.seccionCatalogo}>
-          <Text style={styles.tituloSeccion}>SERVICIOS DISPONIBLES</Text>
-          {cargando ? (
-            <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
-          ) : servicios.length > 0 ? (
-            servicios.map((serv) => (
-              <ServicioItem 
-                key={serv.idServicios}
-                servicio={serv.servicio}
-                precio={serv.precio}
-                imagenUrl={serv.imagenUrl}
-              />
-            ))
-          ) : (
-            <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
-          )}
-        </View>
-
-        <View style={styles.seccionCatalogo}>
-          <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
-          {estilistas.length > 0 ? (
-            estilistas.map((est) => (
-              <EstilistaItem 
-                key={est.idEstilistas || est.idUsuarios || est.id}
-                nombres={est.nombres}
-                apellido={est.apellido}
-                foto={est.foto}
-              />
-            ))
-          ) : (
-            <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
-          )}
-        </View>
+                  <Text style={styles.tituloSeccion}>INSPIRACIÓN & TENDENCIAS</Text>
+                  <Text style={styles.subtituloSeccion}>Explora nuestros trabajos recientes</Text>
+                </View>
+        
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galeriaHorizontal}>
+                  {itemsGaleria.map((item) => (
+                    <TarjetaGaleria 
+                      key={item.id}
+                      imagen={item.imagen}
+                      titulo={item.titulo}
+                    />
+                  ))}
+                </ScrollView>
+        
+                <View style={styles.seccionCatalogo}>
+                  <Text style={styles.tituloSeccion}>SERVICIOS DESTACADOS</Text>
+                  {cargando ? (
+                    <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
+                  ) : servicios.length > 0 ? (
+                    servicios.slice(0, 5).map((serv) => (  
+                      <ServicioItem 
+                        key={serv.idServicios}
+                        servicio={serv.servicio}
+                        precio={serv.precio}
+                        imagenUrl={serv.imagenUrl}
+                      />
+                    ))
+                  ) : (
+                    <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
+                  )}
+                </View>
+        
+                <View style={styles.seccionCatalogo}>
+                  <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
+                  {estilistas.length > 0 ? (
+                    estilistas.map((est) => (
+                      <EstilistaItem 
+                        key={est.idEstilistas || est.idUsuarios || est.id}
+                        nombres={est.nombres}
+                        apellido={est.apellido}
+                        foto={est.foto}
+                      />
+                    ))
+                  ) : (
+                    <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
+                  )}
+                </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -5,11 +5,30 @@ import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
 import ServicioItem from "../components/ServicioItem";
 import EstilistaItem from "../components/EstilistaItem";
+import TarjetaGaleria from "../components/TarjetaGaleria"; 
 
 export default function HomeCliente({ navigation }) {
   const [servicios, setServicios] = useState([]);
   const [estilistas, setEstilistas] = useState([]);
   const [cargando, setCargando] = useState(true);
+
+  const itemsGaleria = [
+    {
+      id: '1',
+      titulo: 'Alisado Progresivo',
+      imagen: require('../img/alisado.png'),
+    },
+    {
+      id: '2',
+      titulo: 'Coloración',
+      imagen: require('../img/coloracion.png'),
+    },
+    {
+      id: '3',
+      titulo: 'Peinado y Modelado',
+      imagen: require('../img/peinado.png'),
+    },
+  ];
 
   const cargarDatosPublicos = async () => {
     try {
@@ -62,63 +81,49 @@ export default function HomeCliente({ navigation }) {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galeriaHorizontal}>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
+          {itemsGaleria.map((item) => (
+            <TarjetaGaleria 
+              key={item.id}
+              imagen={item.imagen}
+              titulo={item.titulo}
             />
-            <Text style={styles.tituloGaleria}>Cortes & Styling</Text>
-          </View>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
-            />
-            <Text style={styles.tituloGaleria}>Coloración Avanzada</Text>
-          </View>
-          <View style={styles.tarjetaGaleria}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&q=80&w=600' }} 
-              style={styles.imagenGaleria} 
-            />
-            <Text style={styles.tituloGaleria}>Tratamientos Spa</Text>
-          </View>
+          ))}
         </ScrollView>
 
         <View style={styles.seccionCatalogo}>
-                  <Text style={styles.tituloSeccion}>SERVICIOS DISPONIBLES</Text>
-                  {cargando ? (
-                    <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
-                  ) : servicios.length > 0 ? (
-                    servicios.map((serv) => (
-                      <ServicioItem 
-                        key={serv.idServicios}
-                        servicio={serv.servicio}
-                        precio={serv.precio}
-                        imagenUrl={serv.imagenUrl}
-                      />
-                    ))
-                  ) : (
-                    <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
-                  )}
-                </View>
-        
-                <View style={styles.seccionCatalogo}>
-                  <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
-                  {estilistas.length > 0 ? (
-                    estilistas.map((est) => (
-                      <EstilistaItem 
-                        key={est.idEstilistas || est.idUsuarios || est.id}
-                        nombres={est.nombres}
-                        apellido={est.apellido}
-                        foto={est.foto}
-                      />
-                    ))
-                  ) : (
-                    <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
-                  )}
-                </View>
-        
+          <Text style={styles.tituloSeccion}>SERVICIOS DESTACADOS</Text>
+          {cargando ? (
+            <ActivityIndicator size="small" color="#000000" style={{ marginVertical: 20 }} />
+          ) : servicios.length > 0 ? (
+            servicios.slice(0, 5).map((serv) => (  
+              <ServicioItem 
+                key={serv.idServicios}
+                servicio={serv.servicio}
+                precio={serv.precio}
+                imagenUrl={serv.imagenUrl}
+              />
+            ))
+          ) : (
+            <Text style={styles.textoVacio}>No hay servicios registrados.</Text>
+          )}
+        </View>
+
+        <View style={styles.seccionCatalogo}>
+          <Text style={styles.tituloSeccion}>NUESTROS ESTILISTAS</Text>
+          {estilistas.length > 0 ? (
+            estilistas.map((est) => (
+              <EstilistaItem 
+                key={est.idEstilistas || est.idUsuarios || est.id}
+                nombres={est.nombres}
+                apellido={est.apellido}
+                foto={est.foto}
+              />
+            ))
+          ) : (
+            <Text style={styles.textoVacio}>Profesionales listos para atenderte.</Text>
+          )}
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,31 +133,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-  },
-  navBar: {
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    elevation: 2,
-  },
-  hamburgerButton: {
-    padding: 5,
-  },
-  hamburgerIcon: {
-    fontSize: 24,
-    color: '#000000',
-    fontWeight: 'bold',
-  },
-  logoTexto: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 2,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -233,65 +213,9 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     marginBottom: 30,
   },
-  tarjetaGaleria: {
-    width: 240,
-    marginRight: 15,
-  },
-  imagenGaleria: {
-    width: '100%',
-    height: 300,
-    borderRadius: 8,
-    backgroundColor: '#E0E0E0',
-  },
-  tituloGaleria: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginTop: 8,
-  },
   seccionCatalogo: {
     paddingHorizontal: 20,
     marginBottom: 30,
-  },
-  filaServicio: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  nombreServicio: {
-    fontSize: 15,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  precioServicio: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  filaEstilista: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  avatarEstilista: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
-    backgroundColor: '#E0E0E0',
-    marginRight: 15,
-  },
-  nombreEstilista: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  rolEstilista: {
-    fontSize: 13,
-    color: '#777777',
   },
   textoVacio: {
     color: '#888888',
