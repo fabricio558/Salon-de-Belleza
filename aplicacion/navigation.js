@@ -18,6 +18,7 @@ import HomeCliente from "./screens/HomeCliente";
 import FichaCliente from "./screens/FichaCliente";
 import CrearCita from "./screens/CrearCita";
 import GestionPerfil from "./screens/GestionPerfil";
+import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -122,6 +123,7 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeEstilista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal} />
           <Drawer.Screen name="FichaCliente" component={FichaCliente} options={{ title: 'Ficha Cliente' }} />
+          <Drawer.Screen name="Mi Perfil" component={GestionPerfilEstilista} />
         </>
       )}
 
