@@ -3,7 +3,6 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../db.php'; 
 global $conn;
 
-// Obtener los datos JSON enviados desde React Native
 $input = json_decode(file_get_contents('php://input'), true);
 
 $idClientes       = isset($input['idClientes']) ? intval($input['idClientes']) : 0;
@@ -24,22 +23,18 @@ if ($idClientes <= 0) {
 }
 
 try {
-    // Iniciamos una transacción para actualizar ambas tablas de manera segura
     $conn->begin_transaction();
 
-    // 1. Actualizar los datos principales en la tabla 'usuarios'
     $sqlUsuarios = "UPDATE usuarios SET nombres = ?, apellido = ?, correo = ?, contrasena = ?, fechaNacimiento = ? WHERE idUsuarios = ?";
     $stmtU = $conn->prepare($sqlUsuarios);
     $stmtU->bind_param("sssssi", $nombres, $apellido, $correo, $contrasena, $fechaNacimiento, $idClientes);
     $stmtU->execute();
 
-    // 2. Actualizar las notas específicas en la tabla 'clientes'
     $sqlClientes = "UPDATE clientes SET notaAlergias = ?, notaPreferencias = ? WHERE idClientes = ?";
     $stmtC = $conn->prepare($sqlClientes);
     $stmtC->bind_param("ssi", $notaAlergias, $notaPreferencias, $idClientes);
     $stmtC->execute();
 
-    // Confirmar los cambios en la base de datos
     $conn->commit();
 
     echo json_encode([
@@ -48,7 +43,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    // Si ocurre algún error, revertimos los cambios para no corromper la BD
     $conn->rollback();
     echo json_encode([
         'success' => false,

@@ -89,6 +89,44 @@ export default function CrearCita({ navigation }) {
   const calcularTotal = () =>
     serviciosSeleccionados.reduce((acc, s) => acc + calcularSubtotal(s), 0);
 
+  const validarHorario = (fecha) => {
+    const dia = fecha.getDay(); 
+    const totalMinutos = fecha.getHours() * 60 + fecha.getMinutes();
+
+    if (dia === 0) {
+      return { valido: false, mensaje: "El local permanece cerrado los domingos." };
+    }
+
+    if (dia >= 1 && dia <= 5) {
+      const t1Inicio = 8 * 60;       
+      const t1Fin = 12 * 60;          
+      const t2Inicio = 13 * 60 + 30;  
+      const t2Fin = 20 * 60;          
+
+      const enTurno1 = totalMinutos >= t1Inicio && totalMinutos <= t1Fin;
+      const enTurno2 = totalMinutos >= t2Inicio && totalMinutos <= t2Fin;
+
+      if (!enTurno1 && !enTurno2) {
+        return { 
+          valido: false, 
+          mensaje: "De lunes a viernes solo puedes agendar de 08:00 a 12:00 y de 13:30 a 20:00." 
+        };
+      }
+    } else if (dia === 6) {
+      const sabInicio = 9 * 60;   
+      const sabFin = 17 * 60;     
+
+      if (totalMinutos < sabInicio || totalMinutos > sabFin) {
+        return { 
+          valido: false, 
+          mensaje: "Los sábados solo puedes agendar de 09:00 a 17:00." 
+        };
+      }
+    }
+
+    return { valido: true };
+  };
+
   const abrirSelectorFecha = () => {
     DateTimePickerAndroid.open({
       value: fechaHora,
@@ -96,6 +134,11 @@ export default function CrearCita({ navigation }) {
       is24Hour: true,
       onChange: (event, date) => {
         if (event.type === "set" && date) {
+          if (date.getDay() === 0) {
+            Alert.alert("Horario no disponible", "El local permanece cerrado los domingos.");
+            return;
+          }
+
           DateTimePickerAndroid.open({
             value: date,
             mode: "time",
@@ -105,6 +148,14 @@ export default function CrearCita({ navigation }) {
                 const fechaCompleta = new Date(date);
                 fechaCompleta.setHours(hora.getHours());
                 fechaCompleta.setMinutes(hora.getMinutes());
+
+                
+                const validacion = validarHorario(fechaCompleta);
+                if (!validacion.valido) {
+                  Alert.alert("Horario no disponible", validacion.mensaje);
+                  return;
+                }
+
                 setFechaHora(fechaCompleta);
               }
             },

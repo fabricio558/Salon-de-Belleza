@@ -15,6 +15,42 @@ if (!$idCliente || !$idEstilista || !$fechaHora || empty($servicios)) {
     exit;
 }
 
+$dateTime = new DateTime($fechaHora);
+$diaSemana = (int)$dateTime->format('N'); 
+$totalMinutos = (int)$dateTime->format('G') * 60 + (int)$dateTime->format('i');
+
+$valido = false;
+$mensajeError = '';
+
+if ($diaSemana >= 1 && $diaSemana <= 5) {
+    $t1_ini = 8 * 60;
+    $t1_fin = 12 * 60;
+    $t2_ini = 13 * 60 + 30;
+    $t2_fin = 20 * 60;
+
+    if (($totalMinutos >= $t1_ini && $totalMinutos <= $t1_fin) || ($totalMinutos >= $t2_ini && $totalMinutos <= $t2_fin)) {
+        $valido = true;
+    } else {
+        $mensajeError = 'Horario fuera del rango permitido de lunes a viernes (08:00 a 12:00 y 13:30 a 20:00).';
+    }
+} elseif ($diaSemana == 6) {
+    $s_ini = 9 * 60;
+    $s_fin = 17 * 60;
+
+    if ($totalMinutos >= $s_ini && $totalMinutos <= $s_fin) {
+        $valido = true;
+    } else {
+        $mensajeError = 'Horario fuera del rango permitido para los sábados (09:00 a 17:00).';
+    }
+} else {
+    $mensajeError = 'El local permanece cerrado los domingos.';
+}
+
+if (!$valido) {
+    echo json_encode(['success' => false, 'message' => $mensajeError]);
+    exit;
+}
+
 $conn->begin_transaction();
 
 try {
