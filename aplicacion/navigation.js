@@ -21,6 +21,8 @@ import GestionPerfil from "./screens/GestionPerfil";
 import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
 import HomeRecepcionista from './screens/HomeRecepcionista';
 import AgendaRecepcion from './screens/AgendaRecepcion';
+import GestionUsuarios from './screens/GestionUsuarios';
+import Registro from './screens/Registro';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -141,6 +143,7 @@ function MyDrawer() {
         <>
           <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaRecepcion} />
+          <Drawer.Screen name="Usuarios" component={GestionUsuarios} />
         </>
       )}
     </Drawer.Navigator>
@@ -154,6 +157,7 @@ export default function Navigation() {
         <Stack.Screen name="Cargando" component={PantallaCarga} />
         <Stack.Screen name="Bienvenida" component={BienvenidaCliente} />
         <Stack.Screen name="Login" component={InicioSesion} />
+        <Stack.Screen name="Registro" component={Registro} />
         <Stack.Screen name="MainDrawer" component={MyDrawer} />
       </Stack.Navigator>
     </NavigationContainer>
