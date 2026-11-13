@@ -19,6 +19,7 @@ function obtenerCitasEntre($conn, $desde, $hasta) {
     $sql = "SELECT
                 c.idCitas,
                 DATE(c.fechaHora) AS fecha,
+                TIME_FORMAT(c.fechaHora, '%H:%i') AS hora,
                 UNIX_TIMESTAMP(c.fechaHora) AS fechaHoraTs,
                 c.clientes AS idClientes,
                 CONCAT(uc.nombres, ' ', uc.apellido) AS cliente,

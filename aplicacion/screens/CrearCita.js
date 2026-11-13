@@ -1,15 +1,29 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Alert,
+  View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Alert, TextInput,
 } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 import BASE_URL from "../direcIP/ip";
+import { validarHorario, formatearFechaHora } from '../utils/horarios';
+import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
+import { normalizarTexto } from '../utils/texto';
 import Header from "../components/header";
 
+const ROL_RECEPCIONISTA = 3;
+const MAX_CLIENTES_SUGERIDOS = 6;
+
+// Reserva de citas. La usan dos roles:
+// - cliente: la cita es para el usuario de la sesión;
+// - recepcionista: elige primero el cliente que pide la cita.
 export default function CrearCita({ navigation }) {
   const [idClientes, setIdClientes] = useState(null);
+
+  const [esRecepcionista, setEsRecepcionista] = useState(false);
+  const [clientes, setClientes] = useState([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [busquedaCliente, setBusquedaCliente] = useState('');
 
   const [servicios, setServicios] = useState([]);
   const [estilistas, setEstilistas] = useState([]);
@@ -23,33 +37,55 @@ export default function CrearCita({ navigation }) {
   const cargarDatos = async () => {
     try {
       const session = await AsyncStorage.getItem('user_session');
-      
-      if (session) {
-        const userData = JSON.parse(session);
-        const idDelCliente = userData.idUsuarios; 
-        
-        if (idDelCliente) {
-            setIdClientes(idDelCliente);
-        } else {
-            Alert.alert("Atención", "Tu sesión es inválida. Volvé a ingresar.");
-        }
-      } else {
+      const userData = session ? JSON.parse(session) : null;
+
+      if (!userData || !userData.idUsuarios) {
         Alert.alert("Atención", "No se encontró tu sesión. Por favor, volvé a iniciar sesión.");
+        return;
       }
 
-      const [resServicios, resEstilistas] = await Promise.all([
+      const recepcion = userData.idRol === ROL_RECEPCIONISTA;
+      setEsRecepcionista(recepcion);
+      if (!recepcion) {
+        setIdClientes(userData.idUsuarios);
+      }
+
+      const pedidos = [
         axios.get(`${BASE_URL}/index.php?action=get_servicios`),
         axios.get(`${BASE_URL}/index.php?action=get_estilistas`),
-      ]);
+      ];
+      if (recepcion) {
+        pedidos.push(axios.get(`${BASE_URL}/index.php?action=get_clientes_lista&idSolicitante=${userData.idUsuarios}`));
+      }
+      const [resServicios, resEstilistas, resClientes] = await Promise.all(pedidos);
 
       if (resServicios.data.success) setServicios(resServicios.data.data);
       if (resEstilistas.data.success) setEstilistas(resEstilistas.data.data);
+      if (resClientes) {
+        if (esRespuestaValida(resClientes.data) && resClientes.data.success) {
+          setClientes(resClientes.data.data);
+        } else {
+          Alert.alert('Atención', resClientes.data?.message || 'No se pudo cargar la lista de clientes.');
+        }
+      }
     } catch (error) {
       console.log("Error al cargar datos:", error);
-      Alert.alert("Error", "No se pudieron cargar los servicios o estilistas");
+      Alert.alert('Error', mensajeDeError(error));
     } finally {
       setCargando(false);
     }
+  };
+
+  const textoBusquedaCliente = normalizarTexto(busquedaCliente.trim());
+  const clientesSugeridos = textoBusquedaCliente
+    ? clientes
+      .filter((c) => normalizarTexto(`${c.nombres} ${c.apellido} ${c.correo}`).includes(textoBusquedaCliente))
+      .slice(0, MAX_CLIENTES_SUGERIDOS)
+    : [];
+
+  const elegirCliente = (cliente) => {
+    setClienteSeleccionado(cliente);
+    setBusquedaCliente('');
   };
 
   useEffect(() => {
@@ -89,44 +125,6 @@ export default function CrearCita({ navigation }) {
   const calcularTotal = () =>
     serviciosSeleccionados.reduce((acc, s) => acc + calcularSubtotal(s), 0);
 
-  const validarHorario = (fecha) => {
-    const dia = fecha.getDay(); 
-    const totalMinutos = fecha.getHours() * 60 + fecha.getMinutes();
-
-    if (dia === 0) {
-      return { valido: false, mensaje: "El local permanece cerrado los domingos." };
-    }
-
-    if (dia >= 1 && dia <= 5) {
-      const t1Inicio = 8 * 60;       
-      const t1Fin = 12 * 60;          
-      const t2Inicio = 13 * 60 + 30;  
-      const t2Fin = 20 * 60;          
-
-      const enTurno1 = totalMinutos >= t1Inicio && totalMinutos <= t1Fin;
-      const enTurno2 = totalMinutos >= t2Inicio && totalMinutos <= t2Fin;
-
-      if (!enTurno1 && !enTurno2) {
-        return { 
-          valido: false, 
-          mensaje: "De lunes a viernes solo puedes agendar de 08:00 a 12:00 y de 13:30 a 20:00." 
-        };
-      }
-    } else if (dia === 6) {
-      const sabInicio = 9 * 60;   
-      const sabFin = 17 * 60;     
-
-      if (totalMinutos < sabInicio || totalMinutos > sabFin) {
-        return { 
-          valido: false, 
-          mensaje: "Los sábados solo puedes agendar de 09:00 a 17:00." 
-        };
-      }
-    }
-
-    return { valido: true };
-  };
-
   const abrirSelectorFecha = () => {
     DateTimePickerAndroid.open({
       value: fechaHora,
@@ -165,14 +163,13 @@ export default function CrearCita({ navigation }) {
     });
   };
 
-  const formatearFechaHora = (fecha) => {
-    const pad = (n) => n.toString().padStart(2, "0");
-    return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())} ${pad(fecha.getHours())}:${pad(fecha.getMinutes())}:00`;
-  };
-
   const confirmarCita = async () => {
-    if (!idClientes) {
-      Alert.alert("Atención", "No se identificó tu usuario. Volvé a iniciar sesión.");
+    const idClienteCita = esRecepcionista ? clienteSeleccionado?.idClientes : idClientes;
+    if (!idClienteCita) {
+      Alert.alert(
+        'Atención',
+        esRecepcionista ? 'Elegí el cliente que solicita la cita.' : 'No se identificó tu usuario. Volvé a iniciar sesión.'
+      );
       return;
     }
     if (!estilistaSeleccionado) {
@@ -187,7 +184,7 @@ export default function CrearCita({ navigation }) {
     setEnviando(true);
     try {
       const response = await axios.post(`${BASE_URL}/index.php?action=crear_cita`, {
-        idClientes: idClientes,
+        idClientes: idClienteCita,
         idEstilistas: estilistaSeleccionado.idEstilistas,
         fechaHora: formatearFechaHora(fechaHora),
         servicios: serviciosSeleccionados.map((s) => ({
@@ -197,16 +194,23 @@ export default function CrearCita({ navigation }) {
         })),
       });
 
-      if (response.data.success) {
-        Alert.alert("Éxito", "Tu cita fue reservada correctamente", [
-          { 
-            text: "OK", 
+      if (!esRespuestaValida(response.data)) {
+        console.log('crear_cita devolvió una respuesta inválida:', response.data);
+        Alert.alert('Error', 'Respuesta inválida del servidor');
+      } else if (response.data.success) {
+        const mensaje = esRecepcionista
+          ? `La cita de ${clienteSeleccionado.nombres} ${clienteSeleccionado.apellido} fue agendada correctamente.`
+          : 'Tu cita fue reservada correctamente';
+        Alert.alert('Éxito', mensaje, [
+          {
+            text: 'OK',
             onPress: () => {
               setServiciosSeleccionados([]);
               setEstilistaSeleccionado(null);
+              setClienteSeleccionado(null);
               setFechaHora(new Date());
-              navigation.navigate("Inicio"); 
-            } 
+              navigation.navigate('Inicio');
+            }
           },
         ]);
       } else {
@@ -214,7 +218,7 @@ export default function CrearCita({ navigation }) {
       }
     } catch (error) {
       console.log("Error al crear la cita:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor");
+      Alert.alert('Error', mensajeDeError(error));
     } finally {
       setEnviando(false);
     }
@@ -241,8 +245,62 @@ export default function CrearCita({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.cuerpo}>
-          <Text style={styles.titulo}>RESERVAR NUEVA CITA</Text>
-          <Text style={styles.subtitulo}>Selecciona fecha, servicios y estilista preferido.</Text>
+          <Text style={styles.titulo}>{esRecepcionista ? 'AGENDAR CITA' : 'RESERVAR NUEVA CITA'}</Text>
+          <Text style={styles.subtitulo}>
+            {esRecepcionista
+              ? 'Elegí el cliente, la fecha, los servicios y el estilista.'
+              : 'Selecciona fecha, servicios y estilista preferido.'}
+          </Text>
+
+          {esRecepcionista && (
+            <>
+              <Text style={styles.etiquetaSeccion}>Cliente</Text>
+              {clienteSeleccionado ? (
+                <View style={styles.clienteElegido}>
+                  <View style={styles.infoClienteElegido}>
+                    <Text style={styles.nombreClienteElegido}>
+                      {clienteSeleccionado.nombres} {clienteSeleccionado.apellido}
+                    </Text>
+                    <Text style={styles.correoCliente}>{clienteSeleccionado.correo}</Text>
+                  </View>
+                  <Pressable style={styles.botonCambiarCliente} onPress={() => setClienteSeleccionado(null)}>
+                    <Text style={styles.textoCambiarCliente}>Cambiar</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <>
+                  <TextInput
+                    style={styles.buscadorCliente}
+                    placeholder="Buscar cliente por nombre o correo"
+                    placeholderTextColor="#888888"
+                    autoCapitalize="none"
+                    value={busquedaCliente}
+                    onChangeText={setBusquedaCliente}
+                  />
+                  {clientesSugeridos.map((cliente) => (
+                    <Pressable
+                      key={cliente.idClientes}
+                      style={styles.sugerenciaCliente}
+                      onPress={() => elegirCliente(cliente)}
+                    >
+                      <Text style={styles.nombreSugerencia}>{cliente.nombres} {cliente.apellido}</Text>
+                      <Text style={styles.correoCliente}>{cliente.correo}</Text>
+                    </Pressable>
+                  ))}
+                  {textoBusquedaCliente !== '' && clientesSugeridos.length === 0 && (
+                    <Text style={styles.textoSinClientes}>
+                      No hay clientes que coincidan. Si es nuevo, tiene que registrarse primero.
+                    </Text>
+                  )}
+                  {textoBusquedaCliente === '' && (
+                    <Text style={styles.textoSinClientes}>
+                      {clientes.length} {clientes.length === 1 ? 'cliente registrado' : 'clientes registrados'}. Escribí para buscar.
+                    </Text>
+                  )}
+                </>
+              )}
+            </>
+          )}
 
           <Text style={styles.etiquetaSeccion}>Fecha y Hora</Text>
           <Pressable style={styles.selectorFecha} onPress={abrirSelectorFecha}>
@@ -288,7 +346,7 @@ export default function CrearCita({ navigation }) {
             );
           })}
 
-          <Text style={styles.etiquetaSeccion}>Selecciona tu Estilista</Text>
+          <Text style={styles.etiquetaSeccion}>{esRecepcionista ? 'Estilista' : 'Selecciona tu Estilista'}</Text>
           <View style={styles.filaEstilistas}>
             {estilistas.map((est) => {
               const activo = estilistaSeleccionado?.idEstilistas === est.idEstilistas;
@@ -332,7 +390,7 @@ export default function CrearCita({ navigation }) {
             {enviando ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.textoBotonConfirmar}>CONFIRMAR RESERVA</Text>
+              <Text style={styles.textoBotonConfirmar}>{esRecepcionista ? 'AGENDAR CITA' : 'CONFIRMAR RESERVA'}</Text>
             )}
           </Pressable>
         </View>
@@ -409,6 +467,64 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
     letterSpacing: 0.5,
+  },
+  buscadorCliente: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#000000',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginBottom: 8,
+  },
+  sugerenciaCliente: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  nombreSugerencia: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  correoCliente: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 2,
+  },
+  textoSinClientes: {
+    fontSize: 12,
+    color: '#888888',
+    marginTop: 4,
+  },
+  clienteElegido: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    padding: 14,
+  },
+  infoClienteElegido: {
+    flex: 1,
+  },
+  nombreClienteElegido: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  botonCambiarCliente: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  textoCambiarCliente: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000000',
   },
   selectorFecha: {
     backgroundColor: "#FAFAFA",

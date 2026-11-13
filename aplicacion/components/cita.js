@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { formatearFecha } from '../utils/fechas';
 
 // Colores por estado_cita.idEstado: 1 Activa, 2 Cancelada, 3 Finalizada, 4 En Curso.
 const COLORES_ESTADO = {
@@ -9,32 +10,41 @@ const COLORES_ESTADO = {
   4: { fondo: '#FFF3E0', texto: '#EF6C00' },
 };
 
-const pad = (n) => n.toString().padStart(2, '0');
-
-export const horaDesdeTimestamp = (ts) => {
-  const fecha = new Date(ts * 1000);
-  return `${pad(fecha.getHours())}:${pad(fecha.getMinutes())}`;
-};
-
-// item: { fechaHoraTs, cliente, estilista, servicios, idEstado, estado, total }
-export default function CardCita({ item }) {
+// item: { fecha, hora, cliente, estilista, servicios, idEstado, estado, total }
+// `fecha` y `hora` vienen formateadas por el servidor en hora del salón: no se
+// calculan desde fechaHoraTs para no depender de la zona horaria del dispositivo.
+// mostrarFecha: antepone la fecha a la hora (para listas de varios días).
+// mostrarCliente: false en la vista del cliente; el título pasa a ser el estilista.
+// children: acciones que se muestran al pie de la tarjeta.
+export default function CardCita({ item, mostrarFecha = false, mostrarCliente = true, children }) {
   const colores = COLORES_ESTADO[item.idEstado] || { fondo: '#F5F5F5', texto: '#666666' };
-
   return (
     <View style={styles.cardCita}>
       <View style={styles.filaSuperior}>
-        <Text style={styles.hora}>{horaDesdeTimestamp(item.fechaHoraTs)}</Text>
+        <View style={styles.contenedorHora}>
+          {mostrarFecha && (
+            <Text style={styles.fecha}>{formatearFecha(item.fecha)}</Text>
+          )}
+          <Text style={styles.hora}>{item.hora}</Text>
+        </View>
         <View style={[styles.chipEstado, { backgroundColor: colores.fondo }]}>
           <Text style={[styles.textoEstado, { color: colores.texto }]}>{item.estado}</Text>
         </View>
       </View>
 
-      <Text style={styles.textoCliente}>{item.cliente}</Text>
-      <Text style={styles.textoDetalle}>✂️ {item.estilista}</Text>
+      {mostrarCliente ? (
+        <>
+          <Text style={styles.textoCliente}>{item.cliente}</Text>
+          <Text style={styles.textoDetalle}>✂️ {item.estilista}</Text>
+        </>
+      ) : (
+        <Text style={styles.textoCliente}>✂️ {item.estilista}</Text>
+      )}
       <Text style={styles.textoDetalle}>💇 {item.servicios || 'Sin servicios cargados'}</Text>
       {item.total > 0 && (
         <Text style={styles.textoTotal}>${item.total.toLocaleString('es-AR')}</Text>
       )}
+      {children}
     </View>
   );
 }
@@ -54,6 +64,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  contenedorHora: {
+    flex: 1,
+    marginRight: 8,
+  },
+  fecha: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#666666',
+    textTransform: 'capitalize',
   },
   hora: {
     fontSize: 18,

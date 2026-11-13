@@ -14,6 +14,10 @@ import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from '../components/header';
 import CardCita from '../components/cita';
+import AccionesCitaSalon from '../components/AccionesCitaSalon';
+
+// estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
+const ESTADO_ACTIVA = 1;
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { formatearFecha, formatearFechaCorta, sumarDias } from '../utils/fechas';
 
@@ -114,7 +118,17 @@ export default function AgendaRecepcion({ navigation }) {
             {grupo.citas.length} {grupo.citas.length === 1 ? 'cita' : 'citas'}
           </Text>
         </View>
-        {grupo.citas.map((cita) => <CardCita key={cita.idCitas} item={cita} />)}
+        {grupo.citas.map((cita) => (
+          <CardCita key={cita.idCitas} item={cita}>
+            {cita.idEstado === ESTADO_ACTIVA && (
+              <AccionesCitaSalon
+                cita={cita}
+                nombreCliente={cita.cliente}
+                onCambio={() => cargarSemana(fechaReferencia)}
+              />
+            )}
+          </CardCita>
+        ))}
       </View>
     ));
   };

@@ -32,6 +32,26 @@ export const formatearFechaCorta = (fechaIso) => {
   return `${fecha.getDate()} ${MESES[fecha.getMonth()].substring(0, 3)}`;
 };
 
+// IMPORTANTE: para MOSTRAR fechas y horas de citas usar los campos `fecha`
+// ('AAAA-MM-DD') y `hora` ('HH:MM') que formatea el servidor en hora del salón.
+// No convertir `fechaHoraTs` con new Date(): usa la zona horaria del dispositivo
+// (un emulador en GMT muestra +3 h).
+
+// 'AAAA-MM-DD' + 'HH:MM' → Date con esa fecha y hora "de reloj" en el dispositivo
+// (para inicializar el selector de fecha y hora).
+export const dateDesdeFechaHora = (fechaIso, hora) => {
+  const fecha = aDate(fechaIso);
+  const [h, m] = hora.split(':').map(Number);
+  fecha.setHours(h, m, 0, 0);
+  return fecha;
+};
+
+// Date (fecha y hora "de reloj" elegidas en el selector) → 'AAAA-MM-DD'.
+export const isoDesdeDate = (date) => aIso(date);
+
+// Date → 'HH:MM'.
+export const horaDesdeDate = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
 // sumarDias('2026-11-12', 7) → '2026-11-19'
 export const sumarDias = (fechaIso, dias) => {
   const fecha = aDate(fechaIso);

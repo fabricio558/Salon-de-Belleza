@@ -17,6 +17,7 @@ import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from '../components/header';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
+import { normalizarTexto } from '../utils/texto';
 
 // Roles que el recepcionista puede asignar (roles.idRol).
 const ROLES_ASIGNABLES = [
@@ -31,14 +32,6 @@ const FILTROS = [{ idRol: null, etiqueta: 'Todos' }, ...ROLES_ASIGNABLES];
 const etiquetaRol = (idRol) =>
   ROLES_ASIGNABLES.find((r) => r.idRol === idRol)?.etiqueta || (idRol === ROL_GERENTE ? 'Gerente' : '—');
 
-// Sin tildes y en minúsculas, para que buscar "maria" encuentre "María".
-// Si el motor JS no trae normalize() se busca igual, solo que distingue tildes.
-const normalizar = (texto) => {
-  const minusculas = (texto || '').toLowerCase();
-  return typeof minusculas.normalize === 'function'
-    ? minusculas.normalize('NFD').replace(/[̀-ͯ]/g, '')
-    : minusculas;
-};
 
 const obtenerIdPropio = async () => {
   const session = await AsyncStorage.getItem('user_session');
@@ -139,7 +132,7 @@ export default function GestionUsuarios({ navigation }) {
     );
   };
 
-  const textoBusqueda = normalizar(busqueda.trim());
+  const textoBusqueda = normalizarTexto(busqueda.trim());
   const usuariosFiltrados = usuarios.filter((u) => {
     if (filtroRol !== null && u.idRol !== filtroRol) {
       return false;
@@ -147,7 +140,7 @@ export default function GestionUsuarios({ navigation }) {
     if (!textoBusqueda) {
       return true;
     }
-    return normalizar(`${u.nombres} ${u.apellido} ${u.correo}`).includes(textoBusqueda);
+    return normalizarTexto(`${u.nombres} ${u.apellido} ${u.correo}`).includes(textoBusqueda);
   });
 
   const contarRol = (idRol) => (idRol === null ? usuarios.length : usuarios.filter((u) => u.idRol === idRol).length);

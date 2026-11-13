@@ -13,8 +13,12 @@ import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from '../components/header';
 import CardCita from '../components/cita';
+import AccionesCitaSalon from '../components/AccionesCitaSalon';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { formatearFecha } from '../utils/fechas';
+
+// estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
+const ESTADO_ACTIVA = 1;
 
 const RESUMEN_ESTADOS = [
   { idEstado: 1, etiqueta: 'Activas' },
@@ -85,7 +89,13 @@ export default function HomeRecepcionista({ navigation }) {
         </View>
       );
     }
-    return citas.map((cita) => <CardCita key={cita.idCitas} item={cita} />);
+    return citas.map((cita) => (
+      <CardCita key={cita.idCitas} item={cita}>
+        {cita.idEstado === ESTADO_ACTIVA && (
+          <AccionesCitaSalon cita={cita} nombreCliente={cita.cliente} onCambio={cargarCitas} />
+        )}
+      </CardCita>
+    ));
   };
 
   return (

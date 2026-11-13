@@ -24,6 +24,7 @@ import AgendaRecepcion from './screens/AgendaRecepcion';
 import GestionUsuarios from './screens/GestionUsuarios';
 import GestionPerfilRecepcionista from './screens/GestionPerfilRecepcionista';
 import Registro from './screens/Registro';
+import MisCitas from './screens/MisCitas';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -136,6 +137,7 @@ function MyDrawer() {
         <>
           <Drawer.Screen name="Inicio" component={HomeCliente} />
           <Drawer.Screen name="Reservar Cita" component={CrearCita} />
+          <Drawer.Screen name="Mis Citas" component={MisCitas} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfil} />
         </>
       )}
@@ -144,6 +146,7 @@ function MyDrawer() {
         <>
           <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaRecepcion} />
+          <Drawer.Screen name="Agendar Cita" component={CrearCita} />
           <Drawer.Screen name="Usuarios" component={GestionUsuarios} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfilRecepcionista} />
         </>

@@ -15,45 +15,68 @@ if (!$idCliente || !$idEstilista || !$fechaHora || empty($servicios)) {
     exit;
 }
 
-$dateTime = new DateTime($fechaHora);
-$diaSemana = (int)$dateTime->format('N'); 
-$totalMinutos = (int)$dateTime->format('G') * 60 + (int)$dateTime->format('i');
+require_once __DIR__ . '/horarios.php';
 
-$valido = false;
-$mensajeError = '';
-
-if ($diaSemana >= 1 && $diaSemana <= 5) {
-    $t1_ini = 8 * 60;
-    $t1_fin = 12 * 60;
-    $t2_ini = 13 * 60 + 30;
-    $t2_fin = 20 * 60;
-
-    if (($totalMinutos >= $t1_ini && $totalMinutos <= $t1_fin) || ($totalMinutos >= $t2_ini && $totalMinutos <= $t2_fin)) {
-        $valido = true;
-    } else {
-        $mensajeError = 'Horario fuera del rango permitido de lunes a viernes (08:00 a 12:00 y 13:30 a 20:00).';
-    }
-} elseif ($diaSemana == 6) {
-    $s_ini = 9 * 60;
-    $s_fin = 17 * 60;
-
-    if ($totalMinutos >= $s_ini && $totalMinutos <= $s_fin) {
-        $valido = true;
-    } else {
-        $mensajeError = 'Horario fuera del rango permitido para los sábados (09:00 a 17:00).';
-    }
-} else {
-    $mensajeError = 'El local permanece cerrado los domingos.';
+$mensajeError = validarHorarioLocal(new DateTime($fechaHora));
+if ($mensajeError !== null) {
+    echo json_encode(['success' => false, 'message' => $mensajeError]);
+    exit;
 }
 
-if (!$valido) {
-    echo json_encode(['success' => false, 'message' => $mensajeError]);
+// Validaciones con datos de la base. "Ahora" según MySQL: el PHP de XAMPP está en Europe/Berlin.
+$stmt = $conn->prepare("SELECT ? > NOW() AS futura");
+$stmt->bind_param("s", $fechaHora);
+$stmt->execute();
+if (!(int)$stmt->get_result()->fetch_assoc()['futura']) {
+    echo json_encode(['success' => false, 'message' => 'Elegí una fecha y hora futura.']);
+    exit;
+}
+
+$stmt = $conn->prepare("SELECT 1 FROM usuarios u INNER JOIN clientes c ON c.idClientes = u.idUsuarios
+                        WHERE u.idUsuarios = ? AND u.idRol = 1 AND u.estado = 1");
+$idClienteInt = (int)$idCliente;
+$stmt->bind_param("i", $idClienteInt);
+$stmt->execute();
+if (!$stmt->get_result()->fetch_row()) {
+    echo json_encode(['success' => false, 'message' => 'El cliente no existe o no está activo.']);
+    exit;
+}
+
+// Un usuario que dejó de ser estilista conserva su fila en `estilistas`: controlar también el rol.
+$stmt = $conn->prepare("SELECT 1 FROM usuarios WHERE idUsuarios = ? AND idRol = 2 AND estado = 1");
+$idEstilistaInt = (int)$idEstilista;
+$stmt->bind_param("i", $idEstilistaInt);
+$stmt->execute();
+if (!$stmt->get_result()->fetch_row()) {
+    echo json_encode(['success' => false, 'message' => 'El estilista elegido no está disponible.']);
     exit;
 }
 
 $conn->begin_transaction();
 
 try {
+    // Bloquear la agenda del estilista hasta el commit: así dos reservas
+    // simultáneas para el mismo horario no pasan las dos el control.
+    if (!bloquearAgendaEstilista($conn, (int)$idEstilista)) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => 'El estilista elegido no está disponible.']);
+        exit;
+    }
+
+    $duracion = duracionDeServicios($conn, $servicios);
+    if ($duracion === null) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => 'Algún servicio elegido no existe o tiene una cantidad inválida.']);
+        exit;
+    }
+
+    $choque = buscarSuperposicion($conn, (int)$idEstilista, $fechaHora, $duracion);
+    if ($choque) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => mensajeSuperposicion($choque)]);
+        exit;
+    }
+
     $sqlCita = "INSERT INTO citas (fechaHora, estado_cita_idEstado, clientes, estilistas) VALUES (?, 1, ?, ?)";
     $stmtCita = $conn->prepare($sqlCita);
     $stmtCita->bind_param("sii", $fechaHora, $idCliente, $idEstilista);
@@ -77,6 +100,7 @@ try {
 
 } catch (Exception $e) {
     $conn->rollback();
-    echo json_encode(['success' => false, 'message' => 'Error al crear la cita: ' . $e->getMessage()]);
+    error_log('crear_cita: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Error al crear la cita. Intentá de nuevo.']);
 }
 ?>

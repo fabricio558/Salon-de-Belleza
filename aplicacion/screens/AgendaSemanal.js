@@ -15,6 +15,10 @@ import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
 import TimerServicio from "../components/TimerServicio";
+import AccionesCitaSalon from '../components/AccionesCitaSalon';
+
+// estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
+const ESTADO_ACTIVA = 1;
 
 export default function AgendaSemanal({ navigation }) {
   const [citasAgrupadas, setCitasAgrupadas] = useState([]);
@@ -226,6 +230,14 @@ export default function AgendaSemanal({ navigation }) {
                       onFinalizado={() => cargarAgenda()}
                     />
                   </View>
+
+                  {cita.idEstado === ESTADO_ACTIVA && (
+                    <AccionesCitaSalon
+                      cita={cita}
+                      nombreCliente={`${cita.nombres} ${cita.apellido}`}
+                      onCambio={() => cargarAgenda()}
+                    />
+                  )}
                 </View>
               ))}
             </View>

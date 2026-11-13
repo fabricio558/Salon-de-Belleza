@@ -22,6 +22,10 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/get_usuarios.php");
         } elseif ($action === 'get_perfil_recepcionista') {
             include("services/get_perfil_recepcionista.php");
+        } elseif ($action === 'get_citas_cliente') {
+            include("services/get_citas_cliente.php");
+        } elseif ($action === 'get_clientes_lista') {
+            include("services/get_clientes_lista.php");
         } else {
             include("services/get.php");
         }
@@ -47,6 +51,14 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/update_perfil_recepcionista.php");
         } elseif ($action === 'update_contrasena') {
             include("services/update_contrasena.php");
+        } elseif ($action === 'cancelar_cita') {
+            include("services/cancelar_cita.php");
+        } elseif ($action === 'reprogramar_cita') {
+            include("services/reprogramar_cita.php");
+        } elseif ($action === 'cancelar_cita_salon') {
+            include("services/cancelar_cita_salon.php");
+        } elseif ($action === 'reprogramar_cita_salon') {
+            include("services/reprogramar_cita_salon.php");
         } else {
             include ("services/post.php");
         }

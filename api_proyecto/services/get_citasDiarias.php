@@ -17,7 +17,9 @@ if (empty($idEstilistas)) {
 $sql = "SELECT 
             c.idCitas,
             c.clientes AS idClientes,
+            DATE(c.fechaHora) AS fecha,
             TIME_FORMAT(c.fechaHora, '%H:%i') AS hora,
+            c.estado_cita_idEstado AS idEstado,
             UNIX_TIMESTAMP(c.horaInicio) AS horaInicioTs,
             UNIX_TIMESTAMP(c.horaFin) AS horaFinTs,
             c.estado_cita_idEstado AS estado,

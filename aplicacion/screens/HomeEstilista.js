@@ -15,6 +15,10 @@ import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 import Header from "../components/header";
 import TimerServicio from "../components/TimerServicio";
+import AccionesCitaSalon from '../components/AccionesCitaSalon';
+
+// estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
+const ESTADO_ACTIVA = 1;
 
 export default function HomeEstilista({ navigation }) {
   const [nombre, setNombre] = useState('');
@@ -217,9 +221,17 @@ export default function HomeEstilista({ navigation }) {
                       idCitas={cita.idCitas}
                       horaInicioTs={cita.horaInicioTs}
                       horaFinTs={cita.horaFinTs}
-                      onFinalizado={() => cargarDatos()} 
+                      onFinalizado={() => cargarDatos()}
                     />
                   </View>
+
+                  {cita.idEstado === ESTADO_ACTIVA && (
+                    <AccionesCitaSalon
+                      cita={cita}
+                      nombreCliente={`${cita.nombres} ${cita.apellido}`}
+                      onCambio={() => cargarDatos()}
+                    />
+                  )}
                 </View>
               );
             })
