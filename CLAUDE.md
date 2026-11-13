@@ -64,7 +64,7 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
 - Entrada: `index.js` → `registerRootComponent(prueba.js)` → `navigation.js`. `prueba.js` es el componente raíz (el test lo importa; no existe `App.js`).
 - `navigation.js`: stack nativo (`Cargando` → `Bienvenida` / `InicioSesion` / `MainDrawer`). `Cargando` revisa la clave `user_session` de AsyncStorage para saltear el login. `MainDrawer` arma las pantallas según el `idRol` de la sesión. Cerrar sesión borra `user_session` y vuelve a `Bienvenida`.
 - **Roles** (`roles.idRol`): 1 = cliente, 2 = estilista, 3 = recepcionista. **No hay rol gerente**: las tareas administrativas (servicios, estilistas, comisiones, stock, proveedores, reportes) son del recepcionista. Cada rol tiene su tabla de subtipo (`clientes`, `estilistas`, `recepcionista`); al cambiar el rol de un usuario hay que crear la fila del subtipo nuevo (lo hace `update_rol_usuario.php`). Pantallas del drawer por rol:
-  - 1: HomeCliente, CrearCita, MisCitas, GestionPerfil.
+  - 1: HomeCliente, CrearCita, MisCitas, Productos, Carrito (como "Mi Carrito"), GestionPerfil.
   - 2: HomeEstilista, AgendaSemanal, FichaCliente, GestionPerfilEstilista.
   - 3: HomeRecepcionista, AgendaRecepcion, CrearCita (como "Agendar Cita"), GestionUsuarios, GestionPerfilRecepcionista.
 
@@ -72,6 +72,7 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
 
   Los roles comparten nombres de pantalla como `"Inicio"`, `"Agenda Semanal"` y `"Mi Perfil"`. El stack, fuera del drawer, tiene además `Registro` (alta de usuarios, siempre como cliente).
 - Sesión: `InicioSesion.js` guarda en `user_session` el `data` que devuelve el login (`idUsuarios`, `idEstilistas`, `nombres`, `apellido`, `idRol`) como JSON. Las pantallas leen de ahí el id del usuario.
+- Carrito del cliente: `context/CarritoContext.js` (`CarritoProvider` envuelve al drawer en `navigation.js`; `useCarrito()` desde cualquier pantalla). Se guarda en AsyncStorage con la clave `carrito_<idUsuarios>` y cada item tiene una copia del producto que `sincronizar()` actualiza con `get_productos`. Solo está habilitado para el rol 1: `Header` muestra el ícono 🛒 con la cantidad. Precio y stock reales los valida siempre el backend. Tests en `__tests__/CarritoContext.test.js`.
 - `components/` tiene la UI reutilizable: tarjetas, ítems de lista, `TimerServicio`, `cita.js` para las citas del recepcionista y del cliente, y `AccionesCitaSalon`. Este último muestra los botones Reprogramar/Cancelar con un modal que pide un mensaje para el cliente; lo usan las pantallas del estilista y del recepcionista en las citas activas.
 - `utils/`:
   - `manejoErrores.js` (`mensajeDeError`, `esRespuestaValida`): usarlo en cada llamada nueva con axios;
@@ -83,7 +84,7 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
 ## Arquitectura de la API (`api_proyecto/`)
 
 - `index.php` agrega los headers de CORS y JSON e incluye `router.php`, que deriva a `services/*.php` según el método HTTP y `?action=`:
-  - GET: `get_citas`, `get_cliente`/`get_clientes`, `get_servicios`, `get_estilistas`, `get_citas_dia`, `get_citas_semana`, `get_usuarios`, `get_perfil_recepcionista`, `get_citas_cliente`, `get_clientes_lista` (si no coincide, `get.php`)
+  - GET: `get_citas`, `get_cliente`/`get_clientes`, `get_servicios`, `get_estilistas`, `get_citas_dia`, `get_citas_semana`, `get_usuarios`, `get_perfil_recepcionista`, `get_citas_cliente`, `get_clientes_lista`, `get_productos` (si no coincide, `get.php`)
   - POST: `login`, `crear_cita`, `iniciar_servicio`, `finalizar_servicio`, `update_servicios_cita`, `registrar_usuario`, `update_rol_usuario`, `update_perfil_recepcionista`, `update_contrasena`, `cancelar_cita`, `reprogramar_cita`, `cancelar_cita_salon`, `reprogramar_cita_salon` (si no coincide, `post.php`)
 - Los services leen el body con `json_decode(file_get_contents('php://input'), true)`, usan el `$conn` global de `db.php` con `require_once __DIR__ . '/../db.php'` y responden `{ success, message, data }`.
 - Patrón de los endpoints nuevos (por ejemplo `finalizar_servicio.php` o `get_citas_semana.php`):

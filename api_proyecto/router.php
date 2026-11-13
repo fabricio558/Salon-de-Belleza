@@ -26,6 +26,8 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/get_citas_cliente.php");
         } elseif ($action === 'get_clientes_lista') {
             include("services/get_clientes_lista.php");
+        } elseif ($action === 'get_productos') {
+            include("services/get_productos.php");
         } else {
             include("services/get.php");
         }

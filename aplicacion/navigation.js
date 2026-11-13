@@ -25,6 +25,11 @@ import GestionUsuarios from './screens/GestionUsuarios';
 import GestionPerfilRecepcionista from './screens/GestionPerfilRecepcionista';
 import Registro from './screens/Registro';
 import MisCitas from './screens/MisCitas';
+import Productos from './screens/Productos';
+import Carrito from './screens/Carrito';
+import { CarritoProvider } from './context/CarritoContext';
+
+const ROL_CLIENTE = 1;
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -83,6 +88,7 @@ function CustomDrawerContent(props) {
 
 function MyDrawer() {
   const [rol, setRol] = useState(null);
+  const [idUsuario, setIdUsuario] = useState(null);
   const [cargandoRol, setCargandoRol] = useState(true);
 
   useEffect(() => {
@@ -92,6 +98,7 @@ function MyDrawer() {
         if (session) {
           const userData = JSON.parse(session);
           setRol(userData.idRol);
+          setIdUsuario(userData.idUsuarios);
         }
       } catch (error) {
         console.log("Error leyendo el rol en el Drawer", error);
@@ -112,6 +119,7 @@ function MyDrawer() {
   }
 
   return (
+    <CarritoProvider idUsuario={idUsuario} habilitado={rol === ROL_CLIENTE}>
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
@@ -138,6 +146,8 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeCliente} />
           <Drawer.Screen name="Reservar Cita" component={CrearCita} />
           <Drawer.Screen name="Mis Citas" component={MisCitas} />
+          <Drawer.Screen name="Productos" component={Productos} />
+          <Drawer.Screen name="Mi Carrito" component={Carrito} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfil} />
         </>
       )}
@@ -152,6 +162,7 @@ function MyDrawer() {
         </>
       )}
     </Drawer.Navigator>
+    </CarritoProvider>
   );
 }
 
