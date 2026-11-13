@@ -22,6 +22,7 @@ import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
 import HomeRecepcionista from './screens/HomeRecepcionista';
 import AgendaRecepcion from './screens/AgendaRecepcion';
 import GestionUsuarios from './screens/GestionUsuarios';
+import GestionPerfilRecepcionista from './screens/GestionPerfilRecepcionista';
 import Registro from './screens/Registro';
 
 const Stack = createNativeStackNavigator();
@@ -144,6 +145,7 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaRecepcion} />
           <Drawer.Screen name="Usuarios" component={GestionUsuarios} />
+          <Drawer.Screen name="Mi Perfil" component={GestionPerfilRecepcionista} />
         </>
       )}
     </Drawer.Navigator>

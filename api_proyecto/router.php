@@ -20,6 +20,8 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/get_citas_semana.php");
         } elseif ($action === 'get_usuarios') {
             include("services/get_usuarios.php");
+        } elseif ($action === 'get_perfil_recepcionista') {
+            include("services/get_perfil_recepcionista.php");
         } else {
             include("services/get.php");
         }
@@ -41,6 +43,10 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/registrar_usuario.php");
         } elseif ($action === 'update_rol_usuario') {
             include("services/update_rol_usuario.php");
+        } elseif ($action === 'update_perfil_recepcionista') {
+            include("services/update_perfil_recepcionista.php");
+        } elseif ($action === 'update_contrasena') {
+            include("services/update_contrasena.php");
         } else {
             include ("services/post.php");
         }
