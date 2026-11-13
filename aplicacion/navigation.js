@@ -20,6 +20,7 @@ import CrearCita from "./screens/CrearCita";
 import GestionPerfil from "./screens/GestionPerfil";
 import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
 import HomeRecepcionista from './screens/HomeRecepcionista';
+import AgendaRecepcion from './screens/AgendaRecepcion';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -139,6 +140,7 @@ function MyDrawer() {
       {rol === 3 && (
         <>
           <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
+          <Drawer.Screen name="Agenda Semanal" component={AgendaRecepcion} />
         </>
       )}
     </Drawer.Navigator>
