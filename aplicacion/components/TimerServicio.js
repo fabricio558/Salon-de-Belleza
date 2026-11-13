@@ -3,6 +3,19 @@ import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'rea
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
 
+const mensajeDeError = (error) => {
+  if (error.response) {
+    return error.response.data?.message || `El servidor respondió con error (HTTP ${error.response.status})`;
+  }
+  if (error.request) {
+    return `No se pudo conectar con ${BASE_URL}. Revisá que el dispositivo esté en la misma red y que XAMPP esté encendido.`;
+  }
+  return error.message;
+};
+
+// Si PHP tira un error fatal devuelve HTML (status 200), no JSON.
+const esRespuestaValida = (data) => data !== null && typeof data === 'object';
+
 export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs = null, onFinalizado }) {
   const [inicioTs, setInicioTs] = useState(horaInicioTs);
   const [finTs, setFinTs] = useState(horaFinTs);
@@ -27,7 +40,7 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
         setSegundos(Math.max(0, Math.floor((ahora - inicioMs) / 1000)));
       };
 
-      actualizar(); 
+      actualizar();
       intervalRef.current = setInterval(actualizar, 1000);
     }
 
@@ -46,13 +59,17 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
     setCargando(true);
     try {
       const response = await axios.post(`${BASE_URL}/index.php?action=iniciar_servicio`, { idCitas });
-      if (response.data.success) {
+      if (!esRespuestaValida(response.data)) {
+        console.log('iniciar_servicio devolvió una respuesta inválida:', response.data);
+        Alert.alert('Error', 'Respuesta inválida del servidor');
+      } else if (response.data.success) {
         setInicioTs(response.data.horaInicioTs);
       } else {
         Alert.alert('Atención', response.data.message);
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo conectar con el servidor');
+      console.log('Error en iniciar_servicio:', error);
+      Alert.alert('Error', mensajeDeError(error));
     } finally {
       setCargando(false);
     }
@@ -62,15 +79,21 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
     setCargando(true);
     try {
       const response = await axios.post(`${BASE_URL}/index.php?action=finalizar_servicio`, { idCitas });
-      if (response.data.success) {
+      if (!esRespuestaValida(response.data)) {
+        console.log('finalizar_servicio devolvió una respuesta inválida:', response.data);
+        Alert.alert('Error', 'Respuesta inválida del servidor');
+      } else if (response.data.success) {
         clearInterval(intervalRef.current);
         setFinTs(response.data.horaFinTs);
-        if (onFinalizado) onFinalizado(); 
+        if (onFinalizado) {
+          onFinalizado();
+        }
       } else {
         Alert.alert('Atención', response.data.message);
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo conectar con el servidor');
+      console.log('Error en finalizar_servicio:', error);
+      Alert.alert('Error', mensajeDeError(error));
     } finally {
       setCargando(false);
     }
