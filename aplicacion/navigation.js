@@ -19,6 +19,7 @@ import FichaCliente from "./screens/FichaCliente";
 import CrearCita from "./screens/CrearCita";
 import GestionPerfil from "./screens/GestionPerfil";
 import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
+import HomeRecepcionista from './screens/HomeRecepcionista';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -132,6 +133,12 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeCliente} />
           <Drawer.Screen name="Reservar Cita" component={CrearCita} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfil} />
+        </>
+      )}
+
+      {rol === 3 && (
+        <>
+          <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
         </>
       )}
     </Drawer.Navigator>

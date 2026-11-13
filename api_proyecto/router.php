@@ -14,6 +14,8 @@ if (isset($_SERVER['REQUEST_METHOD'])){
             include("services/get_servicios.php");
         } elseif ($action === 'get_estilistas') {
             include("services/get_estilistas.php");
+        } elseif ($action === 'get_citas_dia') {
+            include("services/get_citas_dia.php");
         } else {
             include("services/get.php");
         }

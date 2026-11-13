@@ -2,19 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import BASE_URL from '../direcIP/ip';
-
-const mensajeDeError = (error) => {
-  if (error.response) {
-    return error.response.data?.message || `El servidor respondió con error (HTTP ${error.response.status})`;
-  }
-  if (error.request) {
-    return `No se pudo conectar con ${BASE_URL}. Revisá que el dispositivo esté en la misma red y que XAMPP esté encendido.`;
-  }
-  return error.message;
-};
-
-// Si PHP tira un error fatal devuelve HTML (status 200), no JSON.
-const esRespuestaValida = (data) => data !== null && typeof data === 'object';
+import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 
 export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs = null, onFinalizado }) {
   const [inicioTs, setInicioTs] = useState(horaInicioTs);
