@@ -10,8 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import CardCita from '../components/cita';
 import AccionesCitaSalon from '../components/AccionesCitaSalon';
@@ -49,7 +48,7 @@ export default function AgendaRecepcion({ navigation }) {
     try {
       setError(null);
       const params = fecha ? `&fecha=${fecha}` : '';
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_citas_semana${params}`);
+      const response = await api.get(`/index.php?action=get_citas_semana${params}`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_citas_semana devolvió una respuesta inválida:', response.data);

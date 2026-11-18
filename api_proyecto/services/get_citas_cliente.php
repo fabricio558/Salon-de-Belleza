@@ -7,6 +7,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/horarios.php';
+require_once __DIR__ . '/consulta_citas.php';
 
 $idClientes = isset($_GET['idClientes']) ? (int)$_GET['idClientes'] : 0;
 
@@ -32,7 +33,11 @@ try {
                 ec.estado_cita AS estado,
                 GROUP_CONCAT(s.servicio ORDER BY s.servicio SEPARATOR ', ') AS servicios,
                 COALESCE(SUM(cs.cantidad * cs.precioHistorico), 0) AS total,
-                EXISTS (SELECT 1 FROM pagos p WHERE p.citas_idCitas = c.idCitas) AS pagada,
+                (SELECT COALESCE(SUM(p.montoTotal), 0) FROM pagos p WHERE p.citas_idCitas = c.idCitas) AS pagado,
+                (SELECT pm.estado FROM pagos_mp pm WHERE pm.citas_idCitas = c.idCitas
+                 ORDER BY pm.idPagoMp DESC LIMIT 1) AS estadoPagoMp,
+                c.medioPagoLocal AS idMedioPagoLocal,
+                (SELECT ml.medioPago FROM medios_pago ml WHERE ml.idMedios_pago = c.medioPagoLocal) AS medioPagoLocal,
                 (c.estado_cita_idEstado = 1
                     AND c.fechaHora >= NOW() + INTERVAL ? MINUTE) AS puedeModificar,
                 (c.estado_cita_idEstado = 4
@@ -74,8 +79,8 @@ try {
         $row['fechaHoraTs'] = (int)$row['fechaHoraTs'];
         $row['idEstilistas'] = (int)$row['idEstilistas'];
         $row['idEstado'] = (int)$row['idEstado'];
-        $row['total'] = (float)$row['total'];
-        $row['pagada'] = (bool)$row['pagada'];
+        $row['idMedioPagoLocal'] = $row['idMedioPagoLocal'] !== null ? (int)$row['idMedioPagoLocal'] : null;
+        agregarEstadoPago($row);
         $row['puedeModificar'] = (bool)$row['puedeModificar'];
         $row['proxima'] = (bool)$row['proxima'];
         $citas[] = $row;

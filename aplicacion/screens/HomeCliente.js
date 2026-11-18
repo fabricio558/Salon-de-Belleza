@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Image, ActivityIndicator } from "react-native";
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from "../components/header";
 import ServicioItem from "../components/ServicioItem";
 import EstilistaItem from "../components/EstilistaItem";
@@ -33,12 +32,12 @@ export default function HomeCliente({ navigation }) {
   const cargarDatosPublicos = async () => {
     try {
       setCargando(true);
-      const responseServicios = await axios.get(`${BASE_URL}/router.php?action=get_servicios`);
+      const responseServicios = await api.get(`/index.php?action=get_servicios`);
       if (responseServicios.data && responseServicios.data.success) {
         setServicios(responseServicios.data.data);
       }
 
-      const responseEstilistas = await axios.get(`${BASE_URL}/router.php?action=get_estilistas`);
+      const responseEstilistas = await api.get(`/index.php?action=get_estilistas`);
       if (responseEstilistas.data && responseEstilistas.data.success) {
         setEstilistas(responseEstilistas.data.data);
       }

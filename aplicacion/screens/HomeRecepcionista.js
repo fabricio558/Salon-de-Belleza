@@ -9,16 +9,18 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import CardCita from '../components/cita';
 import AccionesCitaSalon from '../components/AccionesCitaSalon';
+import CobroCita from '../components/CobroCita';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { formatearFecha } from '../utils/fechas';
 
 // estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
+// Se cobran todas las que no están canceladas y tienen saldo.
 const ESTADO_ACTIVA = 1;
+const ESTADO_CANCELADA = 2;
 
 const RESUMEN_ESTADOS = [
   { idEstado: 1, etiqueta: 'Activas' },
@@ -37,7 +39,7 @@ export default function HomeRecepcionista({ navigation }) {
   const cargarCitas = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_citas_dia`);
+      const response = await api.get(`/index.php?action=get_citas_dia`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_citas_dia devolvió una respuesta inválida:', response.data);
@@ -93,6 +95,9 @@ export default function HomeRecepcionista({ navigation }) {
       <CardCita key={cita.idCitas} item={cita}>
         {cita.idEstado === ESTADO_ACTIVA && (
           <AccionesCitaSalon cita={cita} nombreCliente={cita.cliente} onCambio={cargarCitas} />
+        )}
+        {cita.idEstado !== ESTADO_CANCELADA && cita.saldo > 0 && (
+          <CobroCita cita={cita} onCambio={cargarCitas} />
         )}
       </CardCita>
     ));

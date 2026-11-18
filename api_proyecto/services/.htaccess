@@ -1,0 +1,3 @@
+# Los services solo se ejecutan a través de index.php?action=... (include por disco).
+# Bloquea el acceso HTTP directo, que con ngrok queda expuesto a internet.
+Require all denied

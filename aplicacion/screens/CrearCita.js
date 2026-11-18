@@ -4,8 +4,7 @@ import {
 } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from "axios";
-import BASE_URL from "../direcIP/ip";
+import api from '../utils/api';
 import { validarHorario, formatearFechaHora } from '../utils/horarios';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { normalizarTexto } from '../utils/texto';
@@ -51,11 +50,11 @@ export default function CrearCita({ navigation }) {
       }
 
       const pedidos = [
-        axios.get(`${BASE_URL}/index.php?action=get_servicios`),
-        axios.get(`${BASE_URL}/index.php?action=get_estilistas`),
+        api.get(`/index.php?action=get_servicios`),
+        api.get(`/index.php?action=get_estilistas`),
       ];
       if (recepcion) {
-        pedidos.push(axios.get(`${BASE_URL}/index.php?action=get_clientes_lista&idSolicitante=${userData.idUsuarios}`));
+        pedidos.push(api.get(`/index.php?action=get_clientes_lista&idSolicitante=${userData.idUsuarios}`));
       }
       const [resServicios, resEstilistas, resClientes] = await Promise.all(pedidos);
 
@@ -183,7 +182,7 @@ export default function CrearCita({ navigation }) {
 
     setEnviando(true);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=crear_cita`, {
+      const response = await api.post(`/index.php?action=crear_cita`, {
         idClientes: idClienteCita,
         idEstilistas: estilistaSeleccionado.idEstilistas,
         fechaHora: formatearFechaHora(fechaHora),

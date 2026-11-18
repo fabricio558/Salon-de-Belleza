@@ -1,7 +1,16 @@
 <?php
+// Crea una cita. El cliente la crea para sí mismo; el recepcionista, para cualquier cliente.
+// POST index.php?action=crear_cita
+// Body: { idClientes, idEstilistas, fechaHora, servicios: [{ idServicios, cantidad }] }
+// Requiere sesión (X-Session-Token). El precio de cada servicio se toma de la base.
 header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/auth.php';
 global $conn;
+
+$sesion = requerirSesion($conn, [ROL_CLIENTE_AUTH, ROL_RECEPCIONISTA_AUTH]);
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -12,6 +21,12 @@ $servicios    = $data['servicios'] ?? [];
 
 if (!$idCliente || !$idEstilista || !$fechaHora || empty($servicios)) {
     echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
+    exit;
+}
+
+if ($sesion['idRol'] === ROL_CLIENTE_AUTH && (int)$idCliente !== $sesion['idUsuarios']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Solo podés reservar citas para vos.']);
     exit;
 }
 
@@ -84,14 +99,15 @@ try {
 
     $idCitaNueva = $conn->insert_id;
 
-    $sqlDetalle = "INSERT INTO citas_servicios (citas_idCitas, servicios_idServicios, cantidad, precioHistorico) VALUES (?, ?, ?, ?)";
+    // El precio sale de `services`, nunca de la app: es lo que después se cobra.
+    $sqlDetalle = "INSERT INTO citas_servicios (citas_idCitas, servicios_idServicios, cantidad, precioHistorico)
+                   SELECT ?, idServicios, ?, precio FROM services WHERE idServicios = ?";
     $stmtDetalle = $conn->prepare($sqlDetalle);
 
     foreach ($servicios as $servicio) {
-        $idServicio = $servicio['idServicios'];
-        $cantidad   = $servicio['cantidad'];
-        $precio     = $servicio['precio'];
-        $stmtDetalle->bind_param("iiid", $idCitaNueva, $idServicio, $cantidad, $precio);
+        $idServicio = (int)$servicio['idServicios'];
+        $cantidad   = (int)$servicio['cantidad'];
+        $stmtDetalle->bind_param("iii", $idCitaNueva, $cantidad, $idServicio);
         $stmtDetalle->execute();
     }
 

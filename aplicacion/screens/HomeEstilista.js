@@ -11,8 +11,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from "../components/header";
 import TimerServicio from "../components/TimerServicio";
 import AccionesCitaSalon from '../components/AccionesCitaSalon';
@@ -35,7 +34,7 @@ export default function HomeEstilista({ navigation }) {
 
   const cargarCatalogoServicios = async () => {
     try {
-        const response = await axios.get(`${BASE_URL}/router.php?action=get_servicios`);
+        const response = await api.get(`/index.php?action=get_servicios`);
         if (response.data && response.data.success) {
             setServiciosCatalogo(response.data.data);
         }
@@ -78,8 +77,8 @@ export default function HomeEstilista({ navigation }) {
 
   const guardarCambiosServicios = async () => {
     try {
-        const url = `${BASE_URL}/router.php?action=update_servicios_cita`;
-        const response = await axios.post(url, {
+        const url = `/index.php?action=update_servicios_cita`;
+        const response = await api.post(url, {
             idCitas: citaSeleccionadaId,
             servicios: serviciosSeleccionados 
         });
@@ -135,7 +134,7 @@ export default function HomeEstilista({ navigation }) {
           return;
         }
 
-        const response = await axios.get(`${BASE_URL}/services/get_citasDiarias.php?id_estilistas=${idEstilista}`);
+        const response = await api.get(`/index.php?action=get_citasDiarias&id_estilistas=${idEstilista}`);
         
         if (response.data && response.data.success) {
           setCitasHoy(response.data.data);

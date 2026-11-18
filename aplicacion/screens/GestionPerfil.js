@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, Image, ActivityIndicator, TextInput, Alert, Modal } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from "../components/header";
 
 export default function GestionPerfil({ navigation }) {
-  const [idCliente, setIdCliente] = useState(null);
   const [nombres, setNombres] = useState('');
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState('');
-  const [contrasenaBD, setContrasenaBD] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [notaAlergias, setNotaAlergias] = useState('');
   const [notaPreferencias, setNotaPreferencias] = useState('');
@@ -47,16 +44,14 @@ export default function GestionPerfil({ navigation }) {
       if (session) {
         const userData = JSON.parse(session);
         const id = userData.idUsuarios || userData.id;
-        setIdCliente(id);
 
         if (id) {
-          const responseCliente = await axios.get(`${BASE_URL}/index.php?action=get_clientes&id=${id}`);
+          const responseCliente = await api.get(`/index.php?action=get_clientes&id=${id}`);
           if (responseCliente.data && responseCliente.data.success) {
             const cli = responseCliente.data.data;
             setNombres(cli.nombres || '');
             setApellido(cli.apellido || '');
             setCorreo(cli.correo || '');
-            setContrasenaBD(cli.contrasena || ''); 
             setFechaNacimiento(cli.fechaNacimiento || '');
             setNotaAlergias(cli.notaAlergias || '');
             setNotaPreferencias(cli.notaPreferencias || '');
@@ -64,7 +59,7 @@ export default function GestionPerfil({ navigation }) {
         }
       }
 
-      const responseEstilistas = await axios.get(`${BASE_URL}/router.php?action=get_estilistas`);
+      const responseEstilistas = await api.get(`/index.php?action=get_estilistas`);
       if (responseEstilistas.data && responseEstilistas.data.success) {
         setEstilistas(responseEstilistas.data.data);
       }
@@ -87,12 +82,11 @@ export default function GestionPerfil({ navigation }) {
 
     try {
       setGuardando(true);
-      const response = await axios.post(`${BASE_URL}/services/update_cliente.php`, {
-        idClientes: idCliente,
+      // El cliente lo toma el servidor de la sesión; la contraseña se cambia aparte.
+      const response = await api.post(`/index.php?action=update_cliente`, {
         nombres,
         apellido,
         correo,
-        contrasena: contrasenaBD,
         fechaNacimiento,
         notaAlergias,
         notaPreferencias
@@ -117,26 +111,15 @@ export default function GestionPerfil({ navigation }) {
       return;
     }
 
-    if (contrasenaActualInput !== contrasenaBD) {
-      Alert.alert("Error", "La contraseña actual es incorrecta.");
-      return;
-    }
-
     try {
       setGuardando(true);
-      const response = await axios.post(`${BASE_URL}/services/update_cliente.php`, {
-        idClientes: idCliente,
-        nombres,
-        apellido,
-        correo,
-        contrasena: nuevaContrasena,
-        fechaNacimiento,
-        notaAlergias,
-        notaPreferencias
+      // La contraseña actual la verifica el servidor (la app ya no la recibe).
+      const response = await api.post(`/index.php?action=update_contrasena`, {
+        contrasenaActual: contrasenaActualInput,
+        nuevaContrasena,
       });
 
       if (response.data && response.data.success) {
-        setContrasenaBD(nuevaContrasena);
         setModalPasswordVisible(false);
         setContrasenaActualInput('');
         setNuevaContrasena('');

@@ -10,7 +10,7 @@ const COLORES_ESTADO = {
   4: { fondo: '#FFF3E0', texto: '#EF6C00' },
 };
 
-// item: { fecha, hora, cliente, estilista, servicios, idEstado, estado, total }
+// item: { fecha, hora, cliente, estilista, servicios, idEstado, estado, total, pagada? }
 // `fecha` y `hora` vienen formateadas por el servidor en hora del salón: no se
 // calculan desde fechaHoraTs para no depender de la zona horaria del dispositivo.
 // mostrarFecha: antepone la fecha a la hora (para listas de varios días).
@@ -42,7 +42,10 @@ export default function CardCita({ item, mostrarFecha = false, mostrarCliente = 
       )}
       <Text style={styles.textoDetalle}>💇 {item.servicios || 'Sin servicios cargados'}</Text>
       {item.total > 0 && (
-        <Text style={styles.textoTotal}>${item.total.toLocaleString('es-AR')}</Text>
+        <Text style={styles.textoTotal}>
+          ${item.total.toLocaleString('es-AR')}
+          {item.pagada && <Text style={styles.textoPagada}>  ✓ Pagada</Text>}
+        </Text>
       )}
       {children}
     </View>
@@ -105,5 +108,10 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginTop: 6,
     textAlign: 'right',
+  },
+  textoPagada: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#2E7D32',
   },
 });

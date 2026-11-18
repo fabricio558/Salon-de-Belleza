@@ -8,3 +8,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('react-native-reanimated', () =>
   require('react-native-reanimated/mock'),
 );
+
+// Módulos de Expo con código nativo (el preset react-native no los provee).
+jest.mock('expo-web-browser', () => ({
+  openAuthSessionAsync: jest.fn(() => Promise.resolve({ type: 'cancel' })),
+  openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'dismiss' })),
+}));
+
+jest.mock('expo-linking', () => ({
+  createURL: jest.fn((ruta) => `exp://localhost:8081/--/${ruta}`),
+}));

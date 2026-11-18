@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { View, ActivityIndicator, Alert } from "react-native";
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { 
   createDrawerNavigator, 
@@ -27,21 +27,40 @@ import Registro from './screens/Registro';
 import MisCitas from './screens/MisCitas';
 import Productos from './screens/Productos';
 import Carrito from './screens/Carrito';
+import MisPedidos from './screens/MisPedidos';
+import PedidosRecepcion from './screens/PedidosRecepcion';
 import { CarritoProvider } from './context/CarritoContext';
+import api, { accion, CLAVE_SESION, leerSesion, registrarAlExpirarSesion } from './utils/api';
 
 const ROL_CLIENTE = 1;
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+const navigationRef = createNavigationContainerRef();
+
+// Si el servidor rechaza el token (vencido o revocado), utils/api.js borra la sesión y llama acá.
+let avisandoSesionExpirada = false;
+registrarAlExpirarSesion(() => {
+  if (!navigationRef.isReady() || avisandoSesionExpirada) {
+    return;
+  }
+  avisandoSesionExpirada = true;
+  navigationRef.reset({ index: 0, routes: [{ name: 'Bienvenida' }] });
+  Alert.alert('Sesión expirada', 'Volvé a iniciar sesión.', [
+    { text: 'OK', onPress: () => { avisandoSesionExpirada = false; } },
+  ]);
+});
 
 function PantallaCarga({ navigation }) {
   useEffect(() => {
     const verificarSesion = async () => {
       try {
-        const session = await AsyncStorage.getItem('user_session');
-        if (session !== null) {
+        const sesion = await leerSesion();
+        if (sesion?.token) {
           navigation.replace('MainDrawer');
         } else {
+          // Las sesiones guardadas antes de usar tokens no sirven: hay que volver a iniciar sesión.
+          await AsyncStorage.removeItem(CLAVE_SESION);
           navigation.replace('Bienvenida');
         }
       } catch (error) {
@@ -63,8 +82,10 @@ function PantallaCarga({ navigation }) {
 function CustomDrawerContent(props) {
   const cerrarSesion = async () => {
     try {
-      await AsyncStorage.removeItem('user_session');
-      
+      // Revoca el token en el servidor; si no hay conexión, igual se cierra la sesión local.
+      await api.post(accion('logout')).catch((error) => console.log('Error en logout:', error.message));
+      await AsyncStorage.removeItem(CLAVE_SESION);
+
       props.navigation.reset({
         index: 0,
         routes: [{ name: 'Bienvenida' }],
@@ -148,6 +169,7 @@ function MyDrawer() {
           <Drawer.Screen name="Mis Citas" component={MisCitas} />
           <Drawer.Screen name="Productos" component={Productos} />
           <Drawer.Screen name="Mi Carrito" component={Carrito} />
+          <Drawer.Screen name="Mis Pedidos" component={MisPedidos} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfil} />
         </>
       )}
@@ -157,6 +179,7 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeRecepcionista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaRecepcion} />
           <Drawer.Screen name="Agendar Cita" component={CrearCita} />
+          <Drawer.Screen name="Pedidos" component={PedidosRecepcion} />
           <Drawer.Screen name="Usuarios" component={GestionUsuarios} />
           <Drawer.Screen name="Mi Perfil" component={GestionPerfilRecepcionista} />
         </>
@@ -168,7 +191,7 @@ function MyDrawer() {
 
 export default function Navigation() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator initialRouteName="Cargando" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Cargando" component={PantallaCarga} />
         <Stack.Screen name="Bienvenida" component={BienvenidaCliente} />

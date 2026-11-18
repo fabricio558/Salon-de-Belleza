@@ -8,6 +8,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/citas_cambios.php';
+require_once __DIR__ . '/pagos_citas.php';
 
 $input = leerJsonBody();
 $idSolicitante = (int)($input['idSolicitante'] ?? 0);
@@ -40,7 +41,11 @@ try {
     cancelarCitaPorId($conn, $idCitas);
     registrarCambioCita($conn, $idCitas, 'cancelacion', $resultado['cita']['fechaHora'], null, $mensaje, $idSolicitante);
 
-    responderCambio($conn, true, ['success' => true, 'message' => 'La cita fue cancelada y el cliente va a ver tu mensaje en "Mis Citas".']);
+    $pagado = montoPagadoCita($conn, $idCitas);
+    $aviso = $pagado > 0
+        ? ' OJO: la cita tenía pagos por $' . number_format($pagado, 2, ',', '.') . '; gestioná el reintegro (si fue con Mercado Pago, desde el panel de MP).'
+        : '';
+    responderCambio($conn, true, ['success' => true, 'message' => 'La cita fue cancelada y el cliente va a ver tu mensaje en "Mis Citas".' . $aviso]);
 } catch (mysqli_sql_exception $e) {
     if ($enTransaccion) {
         $conn->rollback();

@@ -6,7 +6,7 @@ export const mensajeDeError = (error) => {
     return error.response.data?.message || `El servidor respondió con error (HTTP ${error.response.status})`;
   }
   if (error.request) {
-    return `No se pudo conectar con ${BASE_URL}. Revisá que el dispositivo esté en la misma red y que XAMPP esté encendido.`;
+    return `No se pudo conectar con ${BASE_URL}. Revisá que XAMPP esté encendido y que el dispositivo esté en la misma red (o que ngrok esté corriendo, si usás el túnel).`;
   }
   return error.message;
 };

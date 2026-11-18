@@ -13,11 +13,13 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import CardCita from '../components/cita';
+import OpcionesPago from '../components/OpcionesPago';
+import ResumenPagoLocal, { ModalResumenPagoLocal } from '../components/ResumenPagoLocal';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
+import { obtenerPagosPendientes } from '../utils/pagos';
 import { validarHorario, formatearFechaHora } from '../utils/horarios';
 import { formatearFecha, dateDesdeFechaHora, isoDesdeDate, horaDesdeDate } from '../utils/fechas';
 
@@ -27,6 +29,8 @@ const PESTANAS = [
 ];
 
 const ESTADO_ACTIVA = 1;
+// Las canceladas no se pagan; el resto se puede pagar online mientras tenga saldo.
+const ESTADO_CANCELADA = 2;
 
 const obtenerIdCliente = async () => {
   const session = await AsyncStorage.getItem('user_session');
@@ -46,6 +50,22 @@ export default function MisCitas({ navigation }) {
   const [refrescando, setRefrescando] = useState(false);
   const [procesandoId, setProcesandoId] = useState(null);
   const [error, setError] = useState(null);
+  const [pendientesPago, setPendientesPago] = useState(null);
+  const [mostrarResumen, setMostrarResumen] = useState(false);
+
+  // Citas y pedidos sin pagar, con el medio elegido para el local (ver MisPedidos).
+  const cargarPendientesPago = async () => {
+    try {
+      setPendientesPago(await obtenerPagosPendientes());
+    } catch (err) {
+      console.log('Error en get_pagos_pendientes:', err);
+    }
+  };
+
+  const alElegirPagoLocal = async () => {
+    await cargarPendientesPago();
+    setMostrarResumen(true);
+  };
 
   const cargarCitas = async () => {
     try {
@@ -56,8 +76,9 @@ export default function MisCitas({ navigation }) {
         setError('No se encontró tu sesión. Volvé a iniciar sesión.');
         return;
       }
+      cargarPendientesPago();
 
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_citas_cliente&idClientes=${id}`);
+      const response = await api.get(`/index.php?action=get_citas_cliente&idClientes=${id}`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_citas_cliente devolvió una respuesta inválida:', response.data);
@@ -92,7 +113,7 @@ export default function MisCitas({ navigation }) {
   const enviarCambio = async (action, cita, datosExtra = {}) => {
     setProcesandoId(cita.idCitas);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=${action}`, {
+      const response = await api.post(`/index.php?action=${action}`, {
         idClientes: idCliente,
         idCitas: cita.idCitas,
         ...datosExtra,
@@ -273,6 +294,15 @@ export default function MisCitas({ navigation }) {
       <CardCita key={cita.idCitas} item={cita} mostrarFecha mostrarCliente={false}>
         {renderMensajeSalon(cita)}
         {renderAcciones(cita)}
+        {cita.idEstado !== ESTADO_CANCELADA && cita.saldo > 0 && (
+          <OpcionesPago
+            tipo="cita"
+            item={{ ...cita, id: cita.idCitas }}
+            mediosLocal={pendientesPago?.mediosLocal || []}
+            onCambio={cargarCitas}
+            onElegirLocal={alElegirPagoLocal}
+          />
+        )}
       </CardCita>
     ));
   };
@@ -311,8 +341,15 @@ export default function MisCitas({ navigation }) {
           })}
         </View>
 
+        {!cargando && !error && <ResumenPagoLocal pendientes={pendientesPago} />}
         {renderContenido()}
       </ScrollView>
+
+      <ModalResumenPagoLocal
+        visible={mostrarResumen}
+        pendientes={pendientesPago}
+        onClose={() => setMostrarResumen(false)}
+      />
     </SafeAreaView>
   );
 }

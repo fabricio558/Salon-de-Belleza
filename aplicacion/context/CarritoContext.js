@@ -125,6 +125,7 @@ export function CarritoProvider({ idUsuario, habilitado, children }) {
 
     return {
       habilitado: Boolean(habilitado && idUsuario),
+      idUsuario,
       items,
       cantidadTotal: items.reduce((acc, i) => acc + i.cantidad, 0),
       total: items.reduce((acc, i) => acc + i.cantidad * i.precioVenta, 0),

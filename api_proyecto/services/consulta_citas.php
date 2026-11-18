@@ -14,6 +14,15 @@ function fechaHoy($conn) {
     return $conn->query("SELECT CURDATE() AS hoy")->fetch_assoc()['hoy'];
 }
 
+// Convierte total y pagado de una fila de cita y agrega saldo y pagada.
+// pagada = tiene servicios y lo pagado cubre el total.
+function agregarEstadoPago(&$row) {
+    $row['total'] = round((float)$row['total'], 2);
+    $row['pagado'] = round((float)$row['pagado'], 2);
+    $row['saldo'] = max(0, round($row['total'] - $row['pagado'], 2));
+    $row['pagada'] = $row['total'] > 0 && $row['saldo'] <= 0;
+}
+
 // Citas de todos los estilistas entre $desde y $hasta (inclusive), ordenadas por fecha y hora.
 function obtenerCitasEntre($conn, $desde, $hasta) {
     $sql = "SELECT
@@ -29,7 +38,10 @@ function obtenerCitasEntre($conn, $desde, $hasta) {
                 ec.estado_cita AS estado,
                 GROUP_CONCAT(s.servicio ORDER BY s.servicio SEPARATOR ', ') AS servicios,
                 COALESCE(SUM(cs.cantidad * cs.precioHistorico), 0) AS total,
-                EXISTS (SELECT 1 FROM pagos p WHERE p.citas_idCitas = c.idCitas) AS pagada
+                (SELECT COALESCE(SUM(p.montoTotal), 0) FROM pagos p WHERE p.citas_idCitas = c.idCitas) AS pagado,
+                (SELECT pm.estado FROM pagos_mp pm WHERE pm.citas_idCitas = c.idCitas
+                 ORDER BY pm.idPagoMp DESC LIMIT 1) AS estadoPagoMp,
+                (SELECT ml.medioPago FROM medios_pago ml WHERE ml.idMedios_pago = c.medioPagoLocal) AS medioPagoLocal
             FROM citas c
             INNER JOIN usuarios uc ON uc.idUsuarios = c.clientes
             INNER JOIN usuarios ue ON ue.idUsuarios = c.estilistas
@@ -52,8 +64,7 @@ function obtenerCitasEntre($conn, $desde, $hasta) {
         $row['idClientes'] = (int)$row['idClientes'];
         $row['idEstilistas'] = (int)$row['idEstilistas'];
         $row['idEstado'] = (int)$row['idEstado'];
-        $row['total'] = (float)$row['total'];
-        $row['pagada'] = (bool)$row['pagada'];
+        agregarEstadoPago($row);
         $citas[] = $row;
     }
     return $citas;

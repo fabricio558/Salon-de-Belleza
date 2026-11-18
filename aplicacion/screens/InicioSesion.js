@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BASE_URL from '../direcIP/ip';
+import api, { accion, CLAVE_SESION } from '../utils/api';
+import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 
 export default function InicioSesion({ navigation }) {
   const [correo, setCorreo] = useState('');
@@ -24,34 +25,25 @@ export default function InicioSesion({ navigation }) {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/index.php?action=login`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          correo: correo,
-          contrasena: contrasena,
-        }),
-      });
+      const response = await api.post(accion('login'), { correo, contrasena });
+      const data = response.data;
 
-      const data = await response.json(); 
+      if (!esRespuestaValida(data)) {
+        console.log('login devolvió una respuesta inválida:', data);
+        Alert.alert("Error", "Respuesta inválida del servidor");
+      } else if (data.success && data.data?.token) {
+        // data.data: idUsuarios, idEstilistas, nombres, apellido, idRol y el token de sesión.
+        await AsyncStorage.setItem(CLAVE_SESION, JSON.stringify(data.data));
 
-      if (data.success) {
-        if (data.data) {
-          await AsyncStorage.setItem('user_session', JSON.stringify(data.data));
-        }
-        
         setCorreo('');
         setContrasena('');
         navigation.replace('MainDrawer');
       } else {
-        Alert.alert("Atención", data.message); 
-      } 
+        Alert.alert("Atención", data.message || "No se pudo iniciar sesión.");
+      }
     } catch(error) {
-      console.error(error);
-      Alert.alert("Error", "No se pudo conectar con el servidor");
+      console.log('Error en login:', error);
+      Alert.alert("Error", mensajeDeError(error));
     }
   };
 

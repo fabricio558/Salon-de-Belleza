@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, TextInput, Alert, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 
@@ -51,7 +50,7 @@ export default function GestionPerfilRecepcionista({ navigation }) {
         return;
       }
 
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_perfil_recepcionista&id=${id}`);
+      const response = await api.get(`/index.php?action=get_perfil_recepcionista&id=${id}`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_perfil_recepcionista devolvió una respuesta inválida:', response.data);
@@ -89,7 +88,7 @@ export default function GestionPerfilRecepcionista({ navigation }) {
 
     try {
       setGuardando(true);
-      const response = await axios.post(`${BASE_URL}/index.php?action=update_perfil_recepcionista`, {
+      const response = await api.post(`/index.php?action=update_perfil_recepcionista`, {
         idUsuarios: idUsuario,
         nombres: nombres.trim(),
         apellido: apellido.trim(),
@@ -133,7 +132,7 @@ export default function GestionPerfilRecepcionista({ navigation }) {
 
     try {
       setCambiandoContrasena(true);
-      const response = await axios.post(`${BASE_URL}/index.php?action=update_contrasena`, {
+      const response = await api.post(`/index.php?action=update_contrasena`, {
         idUsuarios: idUsuario,
         contrasenaActual,
         nuevaContrasena,

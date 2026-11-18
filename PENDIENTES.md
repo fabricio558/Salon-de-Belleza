@@ -85,14 +85,13 @@ Relevamiento del 13/11/2026 sobre `mydb` (base en vivo), `aplicacion/` y `api_pr
 - **Recepcionista, Etapa 1 y lo que se agregó después**: inicio, agenda semanal, usuarios y perfil están implementados, probados con curl, eslint y jest, y commiteados (`14a4f9a`, `91a3e7d`, `d1cc9f0`, `8afe390`), pero **sin probar en el celular**. Siguen pendientes las etapas 2 a 5 del plan: pendientes de cobro, cobro, comprobante y cita para un cliente.
 - **`utils/generarFacturaPdf.js`**: funciona por sí solo, pero no lo usa ninguna pantalla y está sin commitear (por decisión tuya). Depende del cobro. Tiene un error de tipeo ("TOTAL APAGAR").
 - **Endpoints sin pantalla**:
-  - `get_citas.php` (citas de un estilista, sin uso);
-  - `get.php` y `post.php`, que son el destino por defecto del router (ver §5, seguridad).
+  - `get_citas.php` (citas de un estilista, sin uso).
 - **Código muerto**:
   - `GestionPerfil.js` carga `get_estilistas` y no usa el resultado;
   - `aplicacion/registro.js` es un archivo vacío versionado;
   - `components/cita.js` antes no se usaba (ahora sí);
   - `proyecto/` (web vieja) no la referencia nada.
-- **TODOs**: solo los de contraseñas en texto plano (`registrar_usuario.php`, `update_contrasena.php`). No hay botones con `onPress` vacío.
+- **TODOs**: ninguno (los de contraseñas en texto plano se resolvieron). No hay botones con `onPress` vacío.
 - **Datos incompletos**:
   - Nicki (7) y Luis (8) tienen rol estilista sin fila en `estilistas`, así que no aparecen para reservar.
   - Lautaro (11) no tiene fila en `recepcionista`.
@@ -102,11 +101,16 @@ Relevamiento del 13/11/2026 sobre `mydb` (base en vivo), `aplicacion/` y `api_pr
 ## 5. Requisitos no funcionales pendientes
 
 ### Seguridad (lo más urgente)
-1. **Filtración de datos**: cualquier GET con una acción desconocida (`index.php?action=loquesea`) cae en `get.php`, que devuelve **todos los clientes con su contraseña**. Lo verifiqué: hoy expone 2 registros.
-2. **Sin autenticación ni autorización real**: ningún endpoint sabe quién llama. `update_cliente` y `update_estilista` aceptan cualquier id, así que cualquiera puede cambiar el correo y la contraseña de otro usuario y quedarse con su cuenta. Lo mismo vale para `crear_cita`, `update_servicios_cita`, `iniciar/finalizar_servicio` y `get_clientes`. La verificación de `permisos.php` se basa en un id que manda la app, así que se puede falsificar. Hace falta un token de sesión que emita el login.
-3. **Inyección SQL** en `post.php`.
-4. **Contraseñas en texto plano**. Además, `get_clientes` y `get_estilista` devuelven la contraseña, y los perfiles de cliente y estilista la comparan en el celular.
-5. El login no controla `usuarios.estado`: un usuario inactivo puede entrar.
+1. ~~**Filtración de datos** por `get.php`~~ **Hecho (2026-11-18)**: una acción desconocida responde 404, `get.php` y `post.php` se borraron, y `services/` no se puede llamar directo por HTTP (`.htaccess`).
+2. **Autorización parcial (2026-11-18)**: el login emite un token de sesión (tabla `sesiones`, migración 005) y lo exigen `get_clientes`, `get_estilista`, `update_cliente`, `update_estilista`, `update_contrasena`, `crear_cita` y los endpoints de pagos. **Falta** pasar al token el resto (`get_citas_*`, `iniciar/finalizar_servicio`, `update_servicios_cita`, cancelaciones/reprogramaciones, `permisos.php` con `idSolicitante`, pedidos, `update_rol_usuario`, `get_usuarios`). Lo que sigue es el diagnóstico original:
+   **Sin autenticación ni autorización real**: ningún endpoint sabe quién llama. `update_cliente` y `update_estilista` aceptan cualquier id, así que cualquiera puede cambiar el correo y la contraseña de otro usuario y quedarse con su cuenta. Lo mismo vale para `crear_cita`, `update_servicios_cita`, `iniciar/finalizar_servicio` y `get_clientes`. La verificación de `permisos.php` se basa en un id que manda la app, así que se puede falsificar. Hace falta un token de sesión que emita el login.
+3. ~~**Inyección SQL** en `post.php`.~~ **Hecho**: se borró `post.php`.
+4. ~~**Contraseñas en texto plano**~~ **Hecho**: `password_hash`; las viejas se rehashean al iniciar sesión (`verificarContrasena` en `auth.php`). `get_clientes` y `get_estilista` ya no devuelven la contraseña y los perfiles usan `update_contrasena`. Mientras haya usuarios que no volvieron a entrar, su contraseña sigue en texto plano en la base.
+5. ~~El login no controla `usuarios.estado`~~ **Hecho**: solo entran usuarios activos.
+7. **Pagos con Mercado Pago** (2026-11-18), pendiente:
+   - reintegros: no hay reintegro por API; un pago reintegrado o con contracargo queda marcado en `pagos_mp.estado` pero su fila de `pagos` no se revierte;
+   - si una cita se cobra dos veces (mostrador y MP a la vez), el segundo cobro se registra igual y queda en el log de PHP para reintegrarlo;
+   - producción: credenciales productivas, cuenta del salón verificada y un servidor con HTTPS (ngrok no sirve como hosting).
 6. ~~`crear_cita.php` devuelve `$e->getMessage()` al cliente.~~ **Hecho**: ahora lo registra en el log y responde un mensaje genérico.
 
 ### Reglas de negocio
@@ -117,28 +121,25 @@ Relevamiento del 13/11/2026 sobre `mydb` (base en vivo), `aplicacion/` y `api_pr
   - que la cita **termine** dentro del horario del local: hoy solo se valida la hora de inicio, así que una cita de 120 minutos a las 19:30 se acepta.
 - `update_servicios_cita` (el estilista modifica los servicios de una cita) puede alargar una cita y superponerla con la siguiente: no controla la superposición.
 - `TimerServicio` calcula el tiempo transcurrido con el reloj del dispositivo (`Date.now()`): si el reloj del celular o del emulador está mal, el cronómetro muestra un tiempo incorrecto. Los tiempos guardados (`horaInicio`, `horaFin`) son correctos porque los pone MySQL.
-- `update_estilista.php` pone en NULL `horaEntrada` y `horaSalida` cada vez que el estilista guarda su perfil.
+- ~~`update_estilista.php` pone en NULL `horaEntrada` y `horaSalida`~~ **Hecho**: solo los actualiza si vienen los dos.
 - `get_citasDiarias` y `get_citasSemanal` calculan el total con el precio actual e ignoran `cantidad`.
-- `login.php` devuelve `idEstilistas` a cualquier usuario.
+- ~~`login.php` devuelve `idEstilistas` a cualquier usuario.~~ **Hecho**: `null` si no es estilista.
+- **Hecho**: `crear_cita` y `update_servicios_cita` toman el precio de `services` (antes `crear_cita` guardaba el precio que mandaba la app).
 - Un cambio de rol se aplica recién en el próximo login, porque la sesión guarda el rol.
 
 ### Manejo de errores
 - De los endpoints viejos, 9 no tienen `try/catch`, así que si cae MySQL devuelven HTML: `get_citas`, `get_citasDiarias`, `get_citasSemanal`, `get_clientes`, `get_estilista`, `get_estilistas`, `get_servicios`, `login`, `get.php`/`post.php`.
 - Varios no apagan `display_errors`.
 - Las pantallas viejas muestran "No se pudo conectar" ante cualquier error y no usan `utils/manejoErrores.js`.
-- `InicioSesion.js` usa `fetch` en vez de `axios`.
+- ~~`InicioSesion.js` usa `fetch` en vez de `axios`.~~ **Hecho**: toda la app usa `utils/api.js`.
 
 ### Tests
 - Hay un solo smoke test (`App.test.tsx`).
 - No hay tests de pantallas, de utilidades (`fechas.js` y `manejoErrores.js` se pueden testear fácil) ni del PHP.
 
 ### Deuda técnica de `CLAUDE.md`, todavía vigente
-- Tres formas de llamar a la API.
-- Cinco endpoints que la app llama directo, sin pasar por el router (`get_citasDiarias`, `get_citasSemanal`, `get_estilista`, `update_cliente`, `update_estilista`).
-- `include 'db.php'` relativo en `get.php`/`post.php`.
+- ~~Tres formas de llamar a la API~~ y ~~cinco endpoints sin router~~, ~~`get.php`/`post.php`~~, ~~texto plano~~: **hechos** el 2026-11-18.
 - `package.json` en la raíz.
-- Texto plano.
-- `post.php`.
 - Además: PHP en `Europe/Berlin` (`date()` da el día siguiente desde las 20:00).
 
 ## 6. Lista priorizada
@@ -148,15 +149,15 @@ Tamaño: **C** chico (menos de medio día) · **M** mediano (1 a 2 días) · **G
 ### Prioridad alta
 | # | Tarea | Tamaño | Depende de |
 |---|---|---|---|
-| A1 | Cerrar la filtración: que una acción desconocida devuelva 404 y borrar `get.php`/`post.php` | C | — |
-| A2 | Dejar de devolver contraseñas (`get_clientes`, `get_estilista`); que los perfiles de cliente y estilista usen `update_contrasena` | C | — |
+| A1 | ~~Cerrar la filtración: que una acción desconocida devuelva 404 y borrar `get.php`/`post.php`~~ **Hecho** | C | — |
+| A2 | ~~Dejar de devolver contraseñas; perfiles con `update_contrasena`~~ **Hecho** | C | — |
 | A3 | Probar en el celular lo hecho del recepcionista (inicio, agenda, usuarios, perfil, registro) | C | — |
-| A4 | Arreglar `update_estilista` (no borrar el horario) | C | — |
+| A4 | ~~Arreglar `update_estilista` (no borrar el horario)~~ **Hecho** | C | — |
 | A5 | Completar las filas de subtipo que faltan (7, 8, 11) y cargar `medios_pago` | C | P3 |
-| A6 | Login con token de sesión y validación de rol y dueño en todos los endpoints | G | A1 |
-| A7 | Hashear contraseñas (`password_hash`/`password_verify`, migrando las viejas al iniciar sesión) | M | A2 |
+| A6 | Login con token de sesión (**hecho**) y validación de rol y dueño en todos los endpoints (**parcial**: ver §5, seguridad 2) | G | A1 |
+| A7 | ~~Hashear contraseñas~~ **Hecho** | M | A2 |
 | A8 | ~~Cliente: "Mis citas"~~ **Hecho** | M | — |
-| A9 | Recepcionista: pendientes de cobro y registro del cobro | M | A5, P4 |
+| A9 | Recepcionista: pendientes de cobro y registro del cobro. **Parcial (2026-11-18)**: cobro del saldo en el Inicio del recepcionista (mostrador o link de Mercado Pago) y pago online del cliente en Mis Citas. Falta una lista de cobros pendientes de otros días | M | A5, P4 |
 | A10 | ~~Validar superposición de turnos en `crear_cita`~~ **Hecho** (también en `reprogramar_cita`). Falta: cargar las duraciones reales y controlar el fin de la cita y `update_servicios_cita` | C | — |
 
 ### Prioridad media
@@ -187,7 +188,7 @@ Tamaño: **C** chico (menos de medio día) · **M** mediano (1 a 2 días) · **G
 ## 7. Preguntas
 - **P1.** ¿Borro la fila `idRol = 4` de `roles` y la tabla `gerente` de la base, o las dejo y solo las ignoro?
 - **P2.** ¿Cuál es la fuente de verdad del esquema? La base en vivo tiene columnas (`foto`, `imagenUrl`) que `mydb.sql` no tiene. ¿Vuelvo a exportar el dump?
-- **P3.** ¿Qué medios de pago se aceptan? Por ejemplo: efectivo, débito, crédito, transferencia, Mercado Pago.
+- **P3.** ~~¿Qué medios de pago se aceptan?~~ **Respondida**: efectivo, transferencia, QR / billetera virtual (migración 004) y Mercado Pago online para citas (migración 006).
 - **P4.** ¿Cómo se calcula la comisión: `porcentajeComision` sobre el total de servicios de cada pago? ¿Se liquida por período (semanal, mensual)? ¿Los productos generan comisión?
 - **P5.** **Resuelta en el código, confirmá si te sirve**: el cliente cancela o reprograma citas activas hasta 2 h antes (`ANTICIPACION_CAMBIO_MINUTOS`); el estilista (sus citas) y el recepcionista (todas), sin plazo y con mensaje obligatorio. Las citas en curso, finalizadas o canceladas no se modifican.
 - **P6.** ¿Un cliente dado de alta en el mostrador necesita correo y contraseña, o puede existir sin cuenta?

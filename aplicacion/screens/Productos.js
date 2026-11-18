@@ -10,8 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import ProductoItem, { formatearPrecio } from '../components/ProductoItem';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
@@ -28,7 +27,7 @@ export default function Productos({ navigation }) {
   const cargarProductos = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_productos`);
+      const response = await api.get(`/index.php?action=get_productos`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_productos devolvió una respuesta inválida:', response.data);

@@ -12,8 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 
 const pad = (n) => n.toString().padStart(2, '0');
@@ -70,7 +69,7 @@ export default function Registro({ navigation }) {
 
     setEnviando(true);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=registrar_usuario`, {
+      const response = await api.post(`/index.php?action=registrar_usuario`, {
         nombres: nombres.trim(),
         apellido: apellido.trim(),
         correo: correo.trim(),

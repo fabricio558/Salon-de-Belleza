@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { validarHorario, formatearFechaHora } from '../utils/horarios';
 import { formatearFecha, dateDesdeFechaHora, isoDesdeDate, horaDesdeDate } from '../utils/fechas';
@@ -105,7 +104,7 @@ export default function AccionesCitaSalon({ cita, nombreCliente, onCambio }) {
       if (accion === 'reprogramar') {
         datos.fechaHora = formatearFechaHora(nuevaFecha);
       }
-      const response = await axios.post(`${BASE_URL}/index.php?action=${action}`, datos);
+      const response = await api.post(`/index.php?action=${action}`, datos);
 
       if (!esRespuestaValida(response.data)) {
         console.log(`${action} devolvió una respuesta inválida:`, response.data);

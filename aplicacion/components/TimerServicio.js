@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 
 export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs = null, onFinalizado }) {
@@ -46,7 +45,7 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
   const iniciarServicio = async () => {
     setCargando(true);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=iniciar_servicio`, { idCitas });
+      const response = await api.post(`/index.php?action=iniciar_servicio`, { idCitas });
       if (!esRespuestaValida(response.data)) {
         console.log('iniciar_servicio devolvió una respuesta inválida:', response.data);
         Alert.alert('Error', 'Respuesta inválida del servidor');
@@ -66,7 +65,7 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
   const finalizarServicio = async () => {
     setCargando(true);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=finalizar_servicio`, { idCitas });
+      const response = await api.post(`/index.php?action=finalizar_servicio`, { idCitas });
       if (!esRespuestaValida(response.data)) {
         console.log('finalizar_servicio devolvió una respuesta inválida:', response.data);
         Alert.alert('Error', 'Respuesta inválida del servidor');

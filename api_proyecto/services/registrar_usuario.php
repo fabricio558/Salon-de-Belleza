@@ -6,6 +6,8 @@ header('Content-Type: application/json; charset=utf-8');
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/auth.php';
+
 const ROL_CLIENTE = 1;
 const ESTADO_ACTIVO = 1;
 
@@ -58,14 +60,13 @@ try {
 
     $conn->begin_transaction();
 
-    // TODO: la contraseña se guarda en texto plano como en el resto del sistema
-    // (ver "Deuda técnica conocida" en CLAUDE.md).
     $sql = "INSERT INTO usuarios (nombres, apellido, correo, contrasena, fechaNacimiento, fechaCreacion, estado, idRol)
             VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)";
     $stmt = $conn->prepare($sql);
     $estado = ESTADO_ACTIVO;
     $rol = ROL_CLIENTE;
-    $stmt->bind_param("sssssii", $nombres, $apellido, $correo, $contrasena, $fechaNacimiento, $estado, $rol);
+    $hash = hashearContrasena($contrasena);
+    $stmt->bind_param("sssssii", $nombres, $apellido, $correo, $hash, $fechaNacimiento, $estado, $rol);
     $stmt->execute();
     $idUsuario = $conn->insert_id;
 

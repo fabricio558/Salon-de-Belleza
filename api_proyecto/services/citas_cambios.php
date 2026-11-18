@@ -5,22 +5,12 @@
 // Cada cambio queda en la tabla citas_cambios (migración 002).
 
 require_once __DIR__ . '/horarios.php';
+require_once __DIR__ . '/comun.php';
 
 const ROL_ESTILISTA = 2;
 const ROL_RECEPCIONISTA_CITAS = 3;
 const MENSAJE_MIN_CARACTERES = 5;
 const MENSAJE_MAX_CARACTERES = 255;
-
-// Lee el body JSON. Si no es JSON válido (por ejemplo, texto que no está en UTF-8)
-// responde el error y termina, para no confundirlo con "faltan datos".
-function leerJsonBody() {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!is_array($input)) {
-        echo json_encode(['success' => false, 'message' => 'Los datos enviados no son válidos (JSON en UTF-8).']);
-        exit;
-    }
-    return $input;
-}
 
 // Valida el mensaje que el salón le deja al cliente. Devuelve el error o null.
 function validarMensajeCliente($mensaje) {

@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { normalizarTexto } from '../utils/texto';
@@ -58,7 +57,7 @@ export default function GestionUsuarios({ navigation }) {
         return;
       }
 
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_usuarios&idSolicitante=${id}`);
+      const response = await api.get(`/index.php?action=get_usuarios&idSolicitante=${id}`);
 
       if (!esRespuestaValida(response.data)) {
         console.log('get_usuarios devolvió una respuesta inválida:', response.data);
@@ -91,7 +90,7 @@ export default function GestionUsuarios({ navigation }) {
   const cambiarRol = async (usuario, idRol) => {
     setActualizandoId(usuario.idUsuarios);
     try {
-      const response = await axios.post(`${BASE_URL}/index.php?action=update_rol_usuario`, {
+      const response = await api.post(`/index.php?action=update_rol_usuario`, {
         idSolicitante: idPropio,
         idUsuario: usuario.idUsuarios,
         idRol,

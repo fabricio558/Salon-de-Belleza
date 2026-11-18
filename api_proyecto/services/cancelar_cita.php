@@ -7,6 +7,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/citas_cambios.php';
+require_once __DIR__ . '/pagos_citas.php';
 
 $input = leerJsonBody();
 $idClientes = (int)($input['idClientes'] ?? 0);
@@ -33,7 +34,7 @@ try {
     cancelarCitaPorId($conn, $idCitas);
     registrarCambioCita($conn, $idCitas, 'cancelacion', $cita['fechaHora'], null, null, $idClientes);
 
-    responderCambio($conn, true, ['success' => true, 'message' => 'La cita fue cancelada.']);
+    responderCambio($conn, true, ['success' => true, 'message' => 'La cita fue cancelada.' . avisoCancelacionPagada($conn, $idCitas)]);
 } catch (mysqli_sql_exception $e) {
     if ($enTransaccion) {
         $conn->rollback();

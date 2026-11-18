@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, TextInput, Alert, Modal } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from "../components/header";
 
 export default function GestionPerfilEstilista({ navigation }) {
-  const [idEstilista, setIdEstilista] = useState(null);
   const [nombres, setNombres] = useState('');
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState('');
-  const [contrasenaBD, setContrasenaBD] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
 
   const [cargando, setCargando] = useState(true);
@@ -42,16 +39,14 @@ export default function GestionPerfilEstilista({ navigation }) {
       if (session) {
         const userData = JSON.parse(session);
         const id = userData.idUsuarios || userData.id;
-        setIdEstilista(id);
 
         if (id) {
-          const response = await axios.get(`${BASE_URL}/services/get_estilista.php?id=${id}`);
+          const response = await api.get(`/index.php?action=get_estilista&id=${id}`);
           if (response.data && response.data.success) {
             const est = response.data.data;
             setNombres(est.nombres || '');
             setApellido(est.apellido || '');
             setCorreo(est.correo || '');
-            setContrasenaBD(est.contrasena || '');
             setFechaNacimiento(est.fechaNacimiento || '');
           }
         }
@@ -75,12 +70,11 @@ export default function GestionPerfilEstilista({ navigation }) {
 
     try {
       setGuardando(true);
-      const response = await axios.post(`${BASE_URL}/services/update_estilista.php`, {
-        idEstilistas: idEstilista,
+      // El estilista lo toma el servidor de la sesión; la contraseña se cambia aparte.
+      const response = await api.post(`/index.php?action=update_estilista`, {
         nombres,
         apellido,
         correo,
-        contrasena: contrasenaBD,
         fechaNacimiento
       });
 
@@ -103,24 +97,15 @@ export default function GestionPerfilEstilista({ navigation }) {
       return;
     }
 
-    if (contrasenaActualInput !== contrasenaBD) {
-      Alert.alert("Error", "La contraseña actual es incorrecta.");
-      return;
-    }
-
     try {
       setGuardando(true);
-      const response = await axios.post(`${BASE_URL}/services/update_estilista.php`, {
-        idEstilistas: idEstilista,
-        nombres,
-        apellido,
-        correo,
-        contrasena: nuevaContrasena,
-        fechaNacimiento
+      // La contraseña actual la verifica el servidor (la app ya no la recibe).
+      const response = await api.post(`/index.php?action=update_contrasena`, {
+        contrasenaActual: contrasenaActualInput,
+        nuevaContrasena,
       });
 
       if (response.data && response.data.success) {
-        setContrasenaBD(nuevaContrasena);
         setModalPasswordVisible(false);
         setContrasenaActualInput('');
         setNuevaContrasena('');

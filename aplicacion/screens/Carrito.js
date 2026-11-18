@@ -11,26 +11,27 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
-import BASE_URL from '../direcIP/ip';
+import api from '../utils/api';
 import Header from '../components/header';
 import SelectorCantidad from '../components/SelectorCantidad';
 import { formatearPrecio } from '../components/ProductoItem';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { useCarrito } from '../context/CarritoContext';
+import { formatearFecha } from '../utils/fechas';
 
 // Carrito del cliente. Al abrirlo se actualizan precio y stock con el servidor.
-// El total es orientativo: el precio final lo calcula el backend al confirmar (etapa 4).
+// El total es orientativo: el precio final lo calcula el backend en crear_pedido.
 export default function Carrito({ navigation }) {
   const carrito = useCarrito();
   const [actualizando, setActualizando] = useState(false);
   const [errorSincronizar, setErrorSincronizar] = useState(null);
+  const [confirmando, setConfirmando] = useState(false);
 
   const actualizarConServidor = async () => {
     setActualizando(true);
     setErrorSincronizar(null);
     try {
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_productos`);
+      const response = await api.get(`/index.php?action=get_productos`);
       if (!esRespuestaValida(response.data)) {
         console.log('get_productos devolvió una respuesta inválida:', response.data);
         setErrorSincronizar('No se pudieron actualizar precios y stock (respuesta inválida del servidor).');
@@ -73,9 +74,50 @@ export default function Carrito({ navigation }) {
     ]);
   };
 
+  const enviarPedido = async () => {
+    setConfirmando(true);
+    try {
+      // Solo ids y cantidades: precio y stock los toma el backend de la base.
+      const response = await api.post(`/index.php?action=crear_pedido`, {
+        idClientes: carrito.idUsuario,
+        items: carrito.items.map((i) => ({ idProductos: i.idProductos, cantidad: i.cantidad })),
+      });
+
+      if (!esRespuestaValida(response.data)) {
+        console.log('crear_pedido devolvió una respuesta inválida:', response.data);
+        Alert.alert('Error', 'Respuesta inválida del servidor');
+      } else if (response.data.success) {
+        const { idPedido, montoTotal, fechaVence } = response.data;
+        carrito.vaciar();
+        Alert.alert(
+          `Pedido #${idPedido} confirmado`,
+          `Total: ${formatearPrecio(montoTotal)}.\nRetiralo en el salón antes del ${formatearFecha(fechaVence)}.\n\nEn Mis Pedidos elegí cómo pagarlo: en la app con Mercado Pago o en el local (efectivo o transferencia).`,
+          [{ text: 'Ver mis pedidos', onPress: () => navigation.navigate('Mis Pedidos') }]
+        );
+      } else {
+        Alert.alert('No pudimos confirmar el pedido', response.data.message);
+        if (response.data.faltantes) {
+          // Traer stock y precios actuales para que el carrito refleje lo que hay.
+          actualizarConServidor();
+        }
+      }
+    } catch (err) {
+      console.log('Error en crear_pedido:', err);
+      Alert.alert('Error', mensajeDeError(err));
+    } finally {
+      setConfirmando(false);
+    }
+  };
+
   const confirmarPedido = () => {
-    // TODO (etapa 4): crear_pedido en el backend (valida stock y precios en una transacción).
-    Alert.alert('Próximamente', 'Muy pronto vas a poder confirmar tu pedido desde la app.');
+    Alert.alert(
+      'Confirmar pedido',
+      `Vas a reservar ${carrito.cantidadTotal} ${carrito.cantidadTotal === 1 ? 'producto' : 'productos'} por ${formatearPrecio(carrito.total)}.\n\nLo retirás en el salón y lo pagás en la app (Mercado Pago) o en el local (efectivo o transferencia). Tenés 7 días para retirarlo.`,
+      [
+        { text: 'Volver', style: 'cancel' },
+        { text: 'Confirmar', onPress: enviarPedido },
+      ]
+    );
   };
 
   const renderItem = (item) => (
@@ -158,9 +200,16 @@ export default function Carrito({ navigation }) {
               </Text>
             </View>
 
-            <Pressable style={styles.botonPrincipal} onPress={confirmarPedido}>
-              <Text style={styles.textoBotonPrincipal}>CONFIRMAR PEDIDO</Text>
+            <Pressable
+              style={[styles.botonPrincipal, (confirmando || actualizando) && styles.botonDeshabilitado]}
+              onPress={confirmarPedido}
+              disabled={confirmando || actualizando}
+            >
+              {confirmando
+                ? <ActivityIndicator color="#FFFFFF" />
+                : <Text style={styles.textoBotonPrincipal}>CONFIRMAR PEDIDO</Text>}
             </Pressable>
+            <Text style={styles.notaRetiro}>Retiro en el salón · pagás en la app o en el local · 7 días para retirarlo.</Text>
             <Pressable style={styles.botonSecundario} onPress={() => navigation.navigate('Productos')}>
               <Text style={styles.textoBotonSecundario}>SEGUIR COMPRANDO</Text>
             </Pressable>
@@ -309,6 +358,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 20,
+  },
+  botonDeshabilitado: {
+    opacity: 0.6,
+  },
+  notaRetiro: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 8,
   },
   textoBotonPrincipal: {
     color: '#FFFFFF',

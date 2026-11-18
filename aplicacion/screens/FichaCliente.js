@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from "react-native";
 import { useRoute } from '@react-navigation/native';
-import BASE_URL from "../direcIP/ip";
-import axios from "axios";
+import api from '../utils/api';
 import Header from "../components/header"; 
 
 export default function FichaCliente({ navigation }) {
@@ -14,7 +13,7 @@ export default function FichaCliente({ navigation }) {
 
   const cargarCliente = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/index.php?action=get_clientes&id=${idClientes}`);
+      const response = await api.get(`/index.php?action=get_clientes&id=${idClientes}`);
       if (response.data.success) {
         setCliente(response.data.data);
       } else {
