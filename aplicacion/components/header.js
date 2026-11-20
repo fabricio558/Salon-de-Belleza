@@ -1,7 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCarrito } from '../context/CarritoContext';
+import { colors, typography, spacing, radius } from '../theme';
 
+// Header de marca: blanco, logo en serif con letterSpacing amplio y una línea fina
+// abajo. Los botones laterales tienen 44x44 y el título queda centrado.
 export default function Header({ navigation, titulo = "MANDALA", subtitulo }) {
   // Solo el cliente tiene carrito (CarritoProvider en navigation.js).
   const carrito = useCarrito();
@@ -9,25 +13,27 @@ export default function Header({ navigation, titulo = "MANDALA", subtitulo }) {
   return (
     <View style={styles.header}>
       <Pressable
-        style={styles.hamburgerButton}
+        style={({ pressed }) => [styles.botonIcono, pressed && styles.botonPresionado]}
         onPress={() => navigation.openDrawer()}
+        accessibilityRole="button"
+        accessibilityLabel="Abrir menú"
       >
-        <Text style={styles.hamburgerIcon}>☰</Text>
+        <Ionicons name="menu-outline" size={26} color={colors.textPrimary} />
       </Pressable>
 
       <View style={styles.headerTitleContainer}>
-        <Text style={styles.title}>{titulo}</Text>
-        {subtitulo ? <Text style={styles.subtitle}>{subtitulo}</Text> : null}
+        <Text style={styles.title} numberOfLines={1}>{titulo}</Text>
+        {subtitulo ? <Text style={styles.subtitle} numberOfLines={1}>{subtitulo}</Text> : null}
       </View>
 
       {carrito.habilitado ? (
         <Pressable
-          style={styles.botonCarrito}
+          style={({ pressed }) => [styles.botonIcono, pressed && styles.botonPresionado]}
           onPress={() => navigation.navigate('Mi Carrito')}
-          hitSlop={8}
+          accessibilityRole="button"
           accessibilityLabel={`Carrito, ${carrito.cantidadTotal} productos`}
         >
-          <Text style={styles.iconoCarrito}>🛒</Text>
+          <Ionicons name="bag-handle-outline" size={24} color={colors.textPrimary} />
           {carrito.cantidadTotal > 0 && (
             <View style={styles.badge}>
               <Text style={styles.textoBadge}>{carrito.cantidadTotal > 99 ? '99+' : carrito.cantidadTotal}</Text>
@@ -41,69 +47,62 @@ export default function Header({ navigation, titulo = "MANDALA", subtitulo }) {
   );
 }
 
+const TAMANO_BOTON = spacing.toqueMinimo;
+
 const styles = StyleSheet.create({
   header: {
-    height: 60,
-    backgroundColor: '#FFFFFF',
+    height: 64,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    elevation: 2,
+    paddingHorizontal: spacing.sm,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth * 2,
     zIndex: 1,
   },
-  hamburgerButton: {
-    padding: 5,
-    marginRight: 10,
+  botonIcono: {
+    width: TAMANO_BOTON,
+    height: TAMANO_BOTON,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  hamburgerIcon: {
-    fontSize: 24,
-    color: '#000000',
-    fontWeight: 'bold',
+  botonPresionado: {
+    backgroundColor: colors.surfaceSubtle,
   },
   headerTitleContainer: {
     flex: 1,
     alignItems: 'center',
   },
-  // Mismo ancho que el botón ☰ (35) para que el título quede centrado.
+  // Mismo ancho que el botón de menú para que el título quede centrado.
   espacioDerecho: {
-    width: 35,
-  },
-  botonCarrito: {
-    width: 35,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconoCarrito: {
-    fontSize: 22,
+    width: TAMANO_BOTON,
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: 4,
+    right: 2,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    paddingHorizontal: 4,
-    backgroundColor: '#B8838A',
+    paddingHorizontal: spacing.xs,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   textoBadge: {
-    color: '#FFFFFF',
+    ...typography.caption,
     fontSize: 10,
-    fontWeight: 'bold',
+    letterSpacing: 0,
+    lineHeight: 14,
+    color: colors.textOnPrimary,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 2,
+    ...typography.logo,
+    color: colors.textPrimary,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 2,
+    ...typography.label,
+    color: colors.textSecondary,
   },
 });

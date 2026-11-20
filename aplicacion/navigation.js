@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { 
@@ -9,6 +9,8 @@ import {
   DrawerItem 
 } from "@react-navigation/drawer";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, spacing, radius } from './theme';
 
 import HomeEstilista from "./screens/HomeEstilista";
 import AgendaSemanal from "./screens/AgendaSemanal";
@@ -17,12 +19,10 @@ import BienvenidaCliente from "./screens/BienvenidaCliente";
 import HomeCliente from "./screens/HomeCliente"; 
 import FichaCliente from "./screens/FichaCliente";
 import CrearCita from "./screens/CrearCita";
-import GestionPerfil from "./screens/GestionPerfil";
-import GestionPerfilEstilista from "./screens/GestionPerfilEstilista";
+import MiPerfil from "./screens/MiPerfil";
 import HomeRecepcionista from './screens/HomeRecepcionista';
 import AgendaRecepcion from './screens/AgendaRecepcion';
 import GestionUsuarios from './screens/GestionUsuarios';
-import GestionPerfilRecepcionista from './screens/GestionPerfilRecepcionista';
 import Registro from './screens/Registro';
 import MisCitas from './screens/MisCitas';
 import Productos from './screens/Productos';
@@ -30,7 +30,8 @@ import Carrito from './screens/Carrito';
 import MisPedidos from './screens/MisPedidos';
 import PedidosRecepcion from './screens/PedidosRecepcion';
 import { CarritoProvider } from './context/CarritoContext';
-import api, { accion, CLAVE_SESION, leerSesion, registrarAlExpirarSesion } from './utils/api';
+import { CLAVE_SESION, leerSesion, registrarAlExpirarSesion } from './utils/api';
+import { cerrarSesion } from './utils/sesion';
 
 const ROL_CLIENTE = 1;
 
@@ -73,39 +74,84 @@ function PantallaCarga({ navigation }) {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-      <ActivityIndicator size="large" color="#000000" />
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
 }
 
 function CustomDrawerContent(props) {
-  const cerrarSesion = async () => {
-    try {
-      // Revoca el token en el servidor; si no hay conexión, igual se cierra la sesión local.
-      await api.post(accion('logout')).catch((error) => console.log('Error en logout:', error.message));
-      await AsyncStorage.removeItem(CLAVE_SESION);
+  const salir = () => cerrarSesion(props.navigation);
 
-      props.navigation.reset({
-        index: 0,
-        routes: [{ name: 'Bienvenida' }],
-      });
-    } catch (error) {
-      console.log("Error al cerrar sesión", error);
-    }
-  };
-
+  // Drawer de marca: logo arriba con una línea fina, ítems en mayúsculas
+  // espaciadas y "Cerrar sesión" separado al final, en el rojo desaturado del tema.
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView {...props} contentContainerStyle={estilosDrawer.contenido}>
+      <View style={estilosDrawer.marca}>
+        <Text style={estilosDrawer.logo}>MANDALA</Text>
+        <View style={estilosDrawer.filete} />
+        <Text style={estilosDrawer.lema}>Salón de belleza</Text>
+      </View>
       <DrawerItemList {...props} />
-      <DrawerItem 
-        label="Cerrar Sesión" 
-        onPress={cerrarSesion}
-        labelStyle={{ color: '#d9534f', fontWeight: 'bold' }} 
+      <View style={estilosDrawer.separador} />
+      <DrawerItem
+        label="Cerrar Sesión"
+        onPress={salir}
+        labelStyle={[estilosDrawer.etiqueta, { color: colors.error }]}
+        style={estilosDrawer.item}
+        icon={({ size }) => <Ionicons name="log-out-outline" size={size} color={colors.error} />}
       />
     </DrawerContentScrollView>
   );
 }
+
+// Estilos del drawer (fuera de los componentes para no recrearlos en cada render).
+const estilosDrawer = StyleSheet.create({
+  contenido: {
+    paddingTop: 0,
+  },
+  marca: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xl,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  logo: {
+    ...typography.logo,
+    color: colors.textPrimary,
+  },
+  // Filete dorado corto entre logo y lema: el único detalle de color de la marca.
+  filete: {
+    width: 28,
+    height: 1,
+    backgroundColor: colors.gold,
+    marginTop: spacing.sm,
+  },
+  lema: {
+    ...typography.label,
+    color: colors.goldText,
+    marginTop: spacing.sm,
+  },
+  // Ítems rectos, de 48 de alto (más que los 44 mínimos) y en mayúsculas.
+  item: {
+    borderRadius: radius.md,
+    minHeight: 48,
+    justifyContent: 'center',
+    marginHorizontal: spacing.md,
+  },
+  etiqueta: {
+    ...typography.button,
+    fontSize: 12,
+  },
+  separador: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+    marginHorizontal: spacing.xl,
+  },
+});
 
 function MyDrawer() {
   const [rol, setRol] = useState(null);
@@ -133,8 +179,8 @@ function MyDrawer() {
 
   if (cargandoRol) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <ActivityIndicator size="large" color="#000000" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -146,11 +192,16 @@ function MyDrawer() {
       screenOptions={{
         headerShown: false,
         drawerStyle: {
-          backgroundColor: '#FFFFFF', 
-          width: 240,
+          backgroundColor: colors.surface,
+          width: 280,
         },
-        drawerActiveTintColor: '#000000',
-        drawerInactiveTintColor: '#666666',
+        // Ítem activo: negro sólido con texto champagne (9.5:1): el dorado marca "dónde estás".
+        drawerActiveTintColor: colors.goldOnDark,
+        drawerActiveBackgroundColor: colors.primary,
+        drawerLabelStyle: estilosDrawer.etiqueta,
+        drawerItemStyle: estilosDrawer.item,
+        drawerInactiveTintColor: colors.textPrimary,
+        overlayColor: colors.overlay,
       }}
     >
       {rol === 2 && (
@@ -158,7 +209,7 @@ function MyDrawer() {
           <Drawer.Screen name="Inicio" component={HomeEstilista} />
           <Drawer.Screen name="Agenda Semanal" component={AgendaSemanal} />
           <Drawer.Screen name="FichaCliente" component={FichaCliente} options={{ title: 'Ficha Cliente' }} />
-          <Drawer.Screen name="Mi Perfil" component={GestionPerfilEstilista} />
+          <Drawer.Screen name="Mi Perfil" component={MiPerfil} />
         </>
       )}
 
@@ -170,7 +221,7 @@ function MyDrawer() {
           <Drawer.Screen name="Productos" component={Productos} />
           <Drawer.Screen name="Mi Carrito" component={Carrito} />
           <Drawer.Screen name="Mis Pedidos" component={MisPedidos} />
-          <Drawer.Screen name="Mi Perfil" component={GestionPerfil} />
+          <Drawer.Screen name="Mi Perfil" component={MiPerfil} />
         </>
       )}
 
@@ -181,7 +232,7 @@ function MyDrawer() {
           <Drawer.Screen name="Agendar Cita" component={CrearCita} />
           <Drawer.Screen name="Pedidos" component={PedidosRecepcion} />
           <Drawer.Screen name="Usuarios" component={GestionUsuarios} />
-          <Drawer.Screen name="Mi Perfil" component={GestionPerfilRecepcionista} />
+          <Drawer.Screen name="Mi Perfil" component={MiPerfil} />
         </>
       )}
     </Drawer.Navigator>

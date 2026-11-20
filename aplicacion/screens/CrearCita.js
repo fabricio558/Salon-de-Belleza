@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Alert, TextInput,
+  View, Text, StyleSheet, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Alert,
 } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../utils/api';
 import { validarHorario, formatearFechaHora } from '../utils/horarios';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { normalizarTexto } from '../utils/texto';
 import Header from "../components/header";
+import AgendaDisponibilidad from '../components/AgendaDisponibilidad';
+import BuscadorServicios from '../components/BuscadorServicios';
+import { formatearFecha, isoDesdeDate, horaDesdeDate, dateDesdeFechaHora } from '../utils/fechas';
+import { colors, typography, spacing, radius } from '../theme';
+import { Boton, Chip, Input, Tarjeta, Texto, Titulo } from '../components/ui';
 
 const ROL_RECEPCIONISTA = 3;
 const MAX_CLIENTES_SUGERIDOS = 6;
@@ -30,7 +36,14 @@ export default function CrearCita({ navigation }) {
 
   const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
   const [estilistaSeleccionado, setEstilistaSeleccionado] = useState(null);
-  const [fechaHora, setFechaHora] = useState(new Date());
+  // null hasta que se elige en la agenda (o en el selector manual).
+  const [fechaHora, setFechaHora] = useState(null);
+  const seleccion = fechaHora ? { fecha: isoDesdeDate(fechaHora), hora: horaDesdeDate(fechaHora) } : null;
+
+  // Desde la agenda llegan textos 'AAAA-MM-DD' y 'HH:MM' en hora del salón.
+  const elegirHorario = (fecha, hora) => {
+    setFechaHora(fecha ? dateDesdeFechaHora(fecha, hora) : null);
+  };
   const [enviando, setEnviando] = useState(false);
 
   const cargarDatos = async () => {
@@ -126,7 +139,7 @@ export default function CrearCita({ navigation }) {
 
   const abrirSelectorFecha = () => {
     DateTimePickerAndroid.open({
-      value: fechaHora,
+      value: fechaHora || new Date(),
       mode: "date",
       is24Hour: true,
       onChange: (event, date) => {
@@ -179,6 +192,10 @@ export default function CrearCita({ navigation }) {
       Alert.alert("Atención", "Seleccioná al menos un servicio");
       return;
     }
+    if (!fechaHora) {
+      Alert.alert('Atención', 'Elegí un día y un horario en la agenda.');
+      return;
+    }
 
     setEnviando(true);
     try {
@@ -207,7 +224,7 @@ export default function CrearCita({ navigation }) {
               setServiciosSeleccionados([]);
               setEstilistaSeleccionado(null);
               setClienteSeleccionado(null);
-              setFechaHora(new Date());
+              setFechaHora(null);
               navigation.navigate('Inicio');
             }
           },
@@ -227,441 +244,294 @@ export default function CrearCita({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <Header navigation={navigation} />
-        <ActivityIndicator size="large" color="#000000" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={styles.cargando} />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.navBar}>
-        <Pressable onPress={() => navigation.openDrawer()} style={styles.hamburgerButton}>
-          <Text style={styles.hamburgerIcon}>☰</Text>
-        </Pressable>
-        <Text style={styles.logoTexto}>MANDALA</Text>
-        <View style={{ width: 30 }} />
-      </View>
+      <Header navigation={navigation} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.cuerpo}>
-          <Text style={styles.titulo}>{esRecepcionista ? 'AGENDAR CITA' : 'RESERVAR NUEVA CITA'}</Text>
-          <Text style={styles.subtitulo}>
-            {esRecepcionista
-              ? 'Elegí el cliente, la fecha, los servicios y el estilista.'
-              : 'Selecciona fecha, servicios y estilista preferido.'}
-          </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Titulo nivel="h1">{esRecepcionista ? 'Agendar cita' : 'Reservar nueva cita'}</Titulo>
+        <Texto variante="bodySmall" color="textMuted" style={styles.subtitulo}>
+          {esRecepcionista
+            ? 'Elegí el cliente, los servicios, el estilista y un horario libre.'
+            : 'Elegí tus servicios y tu estilista: la agenda te muestra qué horarios quedan libres.'}
+        </Texto>
 
-          {esRecepcionista && (
-            <>
-              <Text style={styles.etiquetaSeccion}>Cliente</Text>
-              {clienteSeleccionado ? (
-                <View style={styles.clienteElegido}>
-                  <View style={styles.infoClienteElegido}>
-                    <Text style={styles.nombreClienteElegido}>
-                      {clienteSeleccionado.nombres} {clienteSeleccionado.apellido}
-                    </Text>
-                    <Text style={styles.correoCliente}>{clienteSeleccionado.correo}</Text>
-                  </View>
-                  <Pressable style={styles.botonCambiarCliente} onPress={() => setClienteSeleccionado(null)}>
-                    <Text style={styles.textoCambiarCliente}>Cambiar</Text>
-                  </Pressable>
+        {esRecepcionista && (
+          <Seccion icono="person-outline" titulo="Cliente">
+            {clienteSeleccionado ? (
+              <Tarjeta variante="suave" style={styles.clienteElegido}>
+                <View style={styles.infoClienteElegido}>
+                  <Text style={styles.nombreClienteElegido}>
+                    {clienteSeleccionado.nombres} {clienteSeleccionado.apellido}
+                  </Text>
+                  <Text style={styles.correoCliente}>{clienteSeleccionado.correo}</Text>
                 </View>
-              ) : (
-                <>
-                  <TextInput
-                    style={styles.buscadorCliente}
-                    placeholder="Buscar cliente por nombre o correo"
-                    placeholderTextColor="#888888"
-                    autoCapitalize="none"
-                    value={busquedaCliente}
-                    onChangeText={setBusquedaCliente}
-                  />
-                  {clientesSugeridos.map((cliente) => (
-                    <Pressable
-                      key={cliente.idClientes}
-                      style={styles.sugerenciaCliente}
-                      onPress={() => elegirCliente(cliente)}
-                    >
+                <Boton
+                  titulo="Cambiar"
+                  variante="ghost"
+                  tamano="sm"
+                  icono="swap-horizontal"
+                  onPress={() => setClienteSeleccionado(null)}
+                />
+              </Tarjeta>
+            ) : (
+              <>
+                <Input
+                  icono="search-outline"
+                  placeholder="Buscar cliente por nombre o correo"
+                  accessibilityLabel="Buscar cliente"
+                  autoCapitalize="none"
+                  value={busquedaCliente}
+                  onChangeText={setBusquedaCliente}
+                  style={styles.buscador}
+                />
+                {clientesSugeridos.map((cliente) => (
+                  <Pressable
+                    key={cliente.idClientes}
+                    style={({ pressed }) => [styles.sugerenciaCliente, pressed && styles.sugerenciaPresionada]}
+                    onPress={() => elegirCliente(cliente)}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="person-circle-outline" size={28} color={colors.primary} />
+                    <View style={styles.infoClienteElegido}>
                       <Text style={styles.nombreSugerencia}>{cliente.nombres} {cliente.apellido}</Text>
                       <Text style={styles.correoCliente}>{cliente.correo}</Text>
-                    </Pressable>
-                  ))}
-                  {textoBusquedaCliente !== '' && clientesSugeridos.length === 0 && (
-                    <Text style={styles.textoSinClientes}>
-                      No hay clientes que coincidan. Si es nuevo, tiene que registrarse primero.
-                    </Text>
-                  )}
-                  {textoBusquedaCliente === '' && (
-                    <Text style={styles.textoSinClientes}>
-                      {clientes.length} {clientes.length === 1 ? 'cliente registrado' : 'clientes registrados'}. Escribí para buscar.
-                    </Text>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          <Text style={styles.etiquetaSeccion}>Fecha y Hora</Text>
-          <Pressable style={styles.selectorFecha} onPress={abrirSelectorFecha}>
-            <Text style={styles.textoSelectorFecha}>
-              📅 {fechaHora.toLocaleDateString()} - {fechaHora.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </Text>
-          </Pressable>
-
-          <Text style={styles.etiquetaSeccion}>Servicios Disponibles</Text>
-          {servicios.map((servicio) => {
-            const seleccionado = serviciosSeleccionados.find(
-              (s) => s.idServicios === servicio.idServicios
-            );
-            return (
-              <View key={servicio.idServicios} style={styles.filaServicio}>
-                <Pressable
-                  style={[styles.chipServicio, seleccionado && styles.chipServicioActivo]}
-                  onPress={() => toggleServicio(servicio)}
-                >
-                  <Text style={[styles.textoChip, seleccionado && styles.textoChipActivo]}>
-                    {servicio.servicio} - ${parseFloat(servicio.precio).toFixed(2)}
+                    </View>
+                  </Pressable>
+                ))}
+                {textoBusquedaCliente !== '' && clientesSugeridos.length === 0 && (
+                  <Text style={styles.textoSinClientes}>
+                    No hay clientes que coincidan. Si es nuevo, tiene que registrarse primero.
                   </Text>
-                </Pressable>
-
-                {seleccionado && (
-                  <View style={styles.controlCantidad}>
-                    <Pressable
-                      style={styles.botonCantidad}
-                      onPress={() => cambiarCantidad(servicio.idServicios, -1)}
-                    >
-                      <Text style={styles.textoBotonCantidad}>-</Text>
-                    </Pressable>
-                    <Text style={styles.cantidadTexto}>{seleccionado.cantidad}</Text>
-                    <Pressable
-                      style={styles.botonCantidad}
-                      onPress={() => cambiarCantidad(servicio.idServicios, 1)}
-                    >
-                      <Text style={styles.textoBotonCantidad}>+</Text>
-                    </Pressable>
-                  </View>
                 )}
-              </View>
-            );
-          })}
+                {textoBusquedaCliente === '' && (
+                  <Text style={styles.textoSinClientes}>
+                    {clientes.length} {clientes.length === 1 ? 'cliente registrado' : 'clientes registrados'}. Escribí para buscar.
+                  </Text>
+                )}
+              </>
+            )}
+          </Seccion>
+        )}
 
-          <Text style={styles.etiquetaSeccion}>{esRecepcionista ? 'Estilista' : 'Selecciona tu Estilista'}</Text>
+        <Seccion icono="sparkles-outline" titulo="Servicios">
+          <BuscadorServicios
+            servicios={servicios}
+            seleccionados={serviciosSeleccionados}
+            onAlternar={toggleServicio}
+            onCambiarCantidad={cambiarCantidad}
+          />
+        </Seccion>
+
+        <Seccion icono="cut-outline" titulo={esRecepcionista ? 'Estilista' : 'Selecciona tu estilista'}>
           <View style={styles.filaEstilistas}>
             {estilistas.map((est) => {
               const activo = estilistaSeleccionado?.idEstilistas === est.idEstilistas;
               return (
-                <Pressable
+                <Chip
                   key={est.idEstilistas}
-                  style={[styles.chipEstilista, activo && styles.chipEstilistaActivo]}
+                  texto={`${est.nombres} ${est.apellido}`}
+                  icono="person-outline"
+                  seleccionado={activo}
                   onPress={() => setEstilistaSeleccionado(est)}
-                >
-                  <Text style={[styles.textoChipEstilista, activo && styles.textoChipEstilistaActivo]}>
-                    ✂️ {est.nombres} {est.apellido}
-                  </Text>
-                </Pressable>
+                />
               );
             })}
           </View>
+        </Seccion>
 
-          {serviciosSeleccionados.length > 0 && (
-            <View style={styles.resumen}>
-              <Text style={styles.etiquetaResumenTitulo}>Resumen de la Reserva</Text>
-              {serviciosSeleccionados.map((s) => (
-                <View key={s.idServicios} style={styles.filaResumen}>
-                  <Text style={styles.textoResumen}>
-                    {s.servicio} x{s.cantidad}
-                  </Text>
-                  <Text style={styles.textoResumen}>${calcularSubtotal(s).toFixed(2)}</Text>
-                </View>
-              ))}
-              <View style={styles.filaTotal}>
-                <Text style={styles.textoTotal}>TOTAL</Text>
-                <Text style={styles.textoTotal}>${calcularTotal().toFixed(2)}</Text>
-              </View>
+        <Seccion icono="calendar-outline" titulo="Día y horario">
+          {seleccion ? (
+            <View style={styles.seleccionHorario} accessibilityLiveRegion="polite">
+              <Ionicons name="checkmark-circle" size={20} color={colors.textOnPrimary} />
+              <Text style={styles.textoSeleccionHorario}>
+                {formatearFecha(seleccion.fecha)} · {seleccion.hora} h
+              </Text>
             </View>
-          )}
+          ) : null}
+          <AgendaDisponibilidad
+            idEstilistas={estilistaSeleccionado?.idEstilistas}
+            servicios={serviciosSeleccionados}
+            seleccion={seleccion}
+            onElegir={elegirHorario}
+            onOtroHorario={abrirSelectorFecha}
+          />
+        </Seccion>
 
-          <Pressable
-            style={[styles.botonConfirmar, enviando && { opacity: 0.6 }]}
-            onPress={confirmarCita}
-            disabled={enviando}
-          >
-            {enviando ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.textoBotonConfirmar}>{esRecepcionista ? 'AGENDAR CITA' : 'CONFIRMAR RESERVA'}</Text>
-            )}
-          </Pressable>
-        </View>
+        {serviciosSeleccionados.length > 0 && (
+          <Tarjeta style={styles.resumen}>
+            <Texto variante="h3" color="textStrong" style={styles.tituloResumen}>Resumen de la reserva</Texto>
+            {serviciosSeleccionados.map((s) => (
+              <View key={s.idServicios} style={styles.filaResumen}>
+                <Text style={styles.textoResumen}>
+                  {s.servicio} x{s.cantidad}
+                </Text>
+                <Text style={styles.textoResumen}>${calcularSubtotal(s).toFixed(2)}</Text>
+              </View>
+            ))}
+            <View style={styles.filaTotal}>
+              <Text style={styles.textoTotal}>Total</Text>
+              <Text style={styles.textoTotal}>${calcularTotal().toFixed(2)}</Text>
+            </View>
+          </Tarjeta>
+        )}
+
+        <Boton
+          titulo={esRecepcionista ? 'Agendar cita' : 'Confirmar reserva'}
+          onPress={confirmarCita}
+          cargando={enviando}
+          tamano="lg"
+          icono="checkmark-circle-outline"
+          anchoCompleto
+          style={styles.botonConfirmar}
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function Seccion({ icono, titulo, children }) {
+  return (
+    <View style={styles.seccion}>
+      <View style={styles.encabezadoSeccion}>
+        <Ionicons name={icono} size={18} color={colors.primaryText} />
+        <Text style={styles.etiquetaSeccion} accessibilityRole="header">{titulo}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#FFFFFF" 
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  navBar: {
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    elevation: 2,
+  cargando: {
+    marginTop: spacing.xxl,
   },
-  hamburgerButton: {
-    padding: 5,
-  },
-  hamburgerIcon: {
-    fontSize: 24,
-    color: '#000000',
-    fontWeight: 'bold',
-  },
-  logoTexto: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 2,
-  },
-  scrollContent: { 
-    paddingTop: 20, 
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  cuerpo: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  titulo: {
-    color: "#000000",
-    fontSize: 22,
-    fontWeight: "900",
-    letterSpacing: 0.5,
-    textAlign: "center",
-    marginBottom: 4,
+  scrollContent: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    paddingHorizontal: spacing.pantalla,
   },
   subtitulo: {
-    fontSize: 13,
-    color: "#666666",
-    textAlign: "center",
-    marginBottom: 20,
+    marginTop: spacing.xs,
+  },
+  seccion: {
+    marginTop: spacing.seccion,
+  },
+  encabezadoSeccion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   etiquetaSeccion: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#000000",
-    marginTop: 20,
-    marginBottom: 10,
-    letterSpacing: 0.5,
-  },
-  buscadorCliente: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#000000',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginBottom: 8,
-  },
-  sugerenciaCliente: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  nombreSugerencia: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  correoCliente: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 2,
-  },
-  textoSinClientes: {
-    fontSize: 12,
-    color: '#888888',
-    marginTop: 4,
+    ...typography.h3,
+    color: colors.textStrong,
+    marginLeft: spacing.sm,
   },
   clienteElegido: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#000000',
-    borderRadius: 8,
-    padding: 14,
+    marginBottom: 0,
   },
   infoClienteElegido: {
     flex: 1,
+    marginLeft: spacing.xs,
   },
   nombreClienteElegido: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    ...typography.bodyStrong,
+    color: colors.textStrong,
   },
-  botonCambiarCliente: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  correoCliente: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
-  textoCambiarCliente: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#000000',
+  buscador: {
+    marginBottom: spacing.sm,
   },
-  selectorFecha: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 8,
-    padding: 14,
+  sugerenciaCliente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: spacing.toqueMinimo,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
   },
-  textoSelectorFecha: { 
-    color: "#333333", 
-    fontSize: 15,
-    fontWeight: "600",
+  sugerenciaPresionada: {
+    backgroundColor: colors.primarySoft,
   },
-  filaServicio: {
-    marginBottom: 10,
+  nombreSugerencia: {
+    ...typography.bodySmall,
+    fontFamily: typography.bodyStrong.fontFamily,
+    color: colors.text,
   },
-  chipServicio: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 8,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+  textoSinClientes: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
-  chipServicioActivo: {
-    backgroundColor: "#000000",
-    borderColor: "#000000",
+  seleccionHorario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 48,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
   },
-  textoChip: { 
-    color: "#333333", 
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  textoChipActivo: { 
-    color: "#FFFFFF", 
-    fontWeight: "bold" 
-  },
-  controlCantidad: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-    backgroundColor: "#F5F5F5",
-    padding: 8,
-    borderRadius: 8,
-  },
-  botonCantidad: {
-    backgroundColor: "#000000",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textoBotonCantidad: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#FFFFFF" 
-  },
-  cantidadTexto: {
-    marginHorizontal: 20,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#000000",
+  textoSeleccionHorario: {
+    ...typography.bodyStrong,
+    color: colors.textOnPrimary,
+    flex: 1,
   },
   filaEstilistas: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  chipEstilista: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  chipEstilistaActivo: {
-    backgroundColor: "#000000",
-    borderColor: "#000000",
-  },
-  textoChipEstilista: {
-    color: "#333333",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  textoChipEstilistaActivo: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   resumen: {
-    marginTop: 20,
-    backgroundColor: "#FAFAFA",
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    marginTop: spacing.seccion,
   },
-  etiquetaResumenTitulo: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#000000",
-    marginBottom: 10,
+  tituloResumen: {
+    marginBottom: spacing.sm,
   },
   filaResumen: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
   },
-  textoResumen: { 
-    fontSize: 14, 
-    color: "#333333",
-    fontWeight: "500",
+  textoResumen: {
+    ...typography.bodySmall,
+    color: colors.text,
   },
   filaTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    paddingTop: 10,
-    marginTop: 6,
+    borderTopColor: colors.border,
   },
-  textoTotal: { 
-    fontSize: 16, 
-    fontWeight: "900", 
-    color: "#000000" 
+  textoTotal: {
+    ...typography.h3,
+    color: colors.primaryText,
   },
   botonConfirmar: {
-    backgroundColor: "#000000",
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 25,
-  },
-  textoBotonConfirmar: { 
-    color: "#FFFFFF", 
-    fontWeight: "bold", 
-    fontSize: 14,
-    letterSpacing: 1,
+    marginTop: spacing.seccion,
   },
 });

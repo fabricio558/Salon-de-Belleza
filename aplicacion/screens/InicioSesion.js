@@ -7,12 +7,13 @@ import {
   StatusBar,
   Pressable,
   ScrollView,
-  TextInput,
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { accion, CLAVE_SESION } from '../utils/api';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
+import { colors, typography, spacing } from '../theme';
+import { Boton, Input, Texto, Titulo } from '../components/ui';
 
 export default function InicioSesion({ navigation }) {
   const [correo, setCorreo] = useState('');
@@ -47,60 +48,75 @@ export default function InicioSesion({ navigation }) {
     }
   };
 
+  // Diseño: pantalla blanca de una sola columna, como la portada de una revista.
+  // El logo es el protagonista (serif grande y espaciada), una línea negra corta
+  // separa la marca del formulario, y hay un solo botón negro: la acción principal.
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       <View style={styles.navBar}>
-        <Pressable onPress={() => navigation.navigate('Bienvenida')}>
-          <Text style={styles.logoTexto}>MANDALA</Text>
-        </Pressable>
-        <Pressable 
-          onPress={() => navigation.navigate('Bienvenida')} 
-          style={styles.navBtnVolver}
-        >
-          <Text style={styles.navBtnVolverText}>← Volver</Text>
-        </Pressable>
+        <Boton
+          titulo="Volver"
+          variante="text"
+          tamano="sm"
+          icono="arrow-back"
+          onPress={() => navigation.navigate('Bienvenida')}
+        />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>INICIAR SESIÓN</Text>
-          <Text style={styles.cardSub}>Ingresa tus credenciales para acceder a tu cuenta.</Text>
-            
-          <TextInput
-            style={styles.input}
-            placeholder="Correo Electrónico"
-            placeholderTextColor="#888888"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={correo}
-            onChangeText={setCorreo}
-          />
-        
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor="#888888"
-            secureTextEntry={true}
-            autoCapitalize="none"
-            value={contrasena}
-            onChangeText={setContrasena}
-          />
-          
-          <Pressable
-            style={styles.button}
-            onPress={login}
-          >
-            <Text style={styles.buttonText}>INGRESAR</Text>
-          </Pressable>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Pressable
+          onPress={() => navigation.navigate('Bienvenida')}
+          accessibilityRole="button"
+          accessibilityLabel="Mandala, ir a la bienvenida"
+          style={styles.marca}
+        >
+          <Text style={styles.logoTexto}>MANDALA</Text>
+          <Text style={styles.lema}>Salón de belleza</Text>
+        </Pressable>
 
-          <Pressable
-            style={styles.buttonRegistroLink}
+        <View style={styles.separador} />
+
+        <Titulo nivel="h1" centrado>Iniciar sesión</Titulo>
+        <Texto variante="bodySmall" color="textSecondary" centrado style={styles.subtitulo}>
+          Ingresa tus credenciales para acceder a tu cuenta.
+        </Texto>
+
+        <Input
+          label="Correo electrónico"
+          icono="mail-outline"
+          placeholder="tucorreo@ejemplo.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={correo}
+          onChangeText={setCorreo}
+        />
+
+        <Input
+          label="Contraseña"
+          icono="lock-closed-outline"
+          placeholder="Tu contraseña"
+          secureTextEntry={true}
+          autoCapitalize="none"
+          value={contrasena}
+          onChangeText={setContrasena}
+        />
+
+        <Boton titulo="Ingresar" onPress={login} tamano="lg" anchoCompleto style={styles.botonIngresar} />
+
+        <View style={styles.registro}>
+          <Text style={styles.textoRegistro}>¿No tienes una cuenta?</Text>
+          <Boton
+            titulo="Regístrate"
+            variante="text"
+            tamano="sm"
             onPress={() => navigation.navigate('Registro')}
-          >
-            <Text style={styles.textRegistroLink}>¿No tienes una cuenta? <Text style={{fontWeight: 'bold', color: '#000000'}}>Regístrate</Text></Text>
-          </Pressable>
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -110,95 +126,56 @@ export default function InicioSesion({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.background,
   },
   navBar: {
-    height: 60,
-    backgroundColor: '#FFFFFF',
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  logoTexto: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 2,
-  },
-  navBtnVolver: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  navBtnVolverText: {
-    fontWeight: 'bold',
-    color: '#666666',
-    fontSize: 14,
+    paddingHorizontal: spacing.lg,
   },
   content: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.pantalla,
+    paddingBottom: spacing.xxxl,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 25,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#000000',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    marginBottom: 5,
-  },
-  cardSub: {
-    fontSize: 13,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 25,
-  },
-  input: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#000000',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  button: {
-    backgroundColor: '#000000',
-    borderRadius: 8,
-    paddingVertical: 15,
+  marca: {
     alignItems: 'center',
-    marginTop: 5,
+    minHeight: spacing.toqueMinimo,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+  logoTexto: {
+    ...typography.display,
+    color: colors.textPrimary,
   },
-  buttonRegistroLink: {
-    marginTop: 20,
+  lema: {
+    ...typography.label,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  // Línea corta y fina: el único "adorno" de la pantalla.
+  separador: {
+    width: 40,
+    height: 1,
+    backgroundColor: colors.primary,
+    alignSelf: 'center',
+    marginVertical: spacing.xxl,
+  },
+  subtitulo: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xxl,
+  },
+  botonIngresar: {
+    marginTop: spacing.sm,
+  },
+  registro: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xl,
   },
-  textRegistroLink: {
-    color: '#666666',
-    fontSize: 13,
+  textoRegistro: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
 });

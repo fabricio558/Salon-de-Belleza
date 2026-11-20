@@ -120,25 +120,34 @@ function motivoNoModificable($conn, $idCitas, $idClientes) {
     return "Las citas se pueden modificar hasta {$horas} horas antes. Comunicate con el salón.";
 }
 
-// Devuelve null si la fecha y hora cae dentro del horario del local, o el mensaje de error.
+// Turnos en los que se puede EMPEZAR una cita, como [desde, hasta] en minutos desde
+// las 00:00, ambos inclusive. $diaSemana: 1 = lunes ... 7 = domingo (DateTime 'N').
 // Lunes a viernes 08:00-12:00 y 13:30-20:00; sábados 09:00-17:00; domingos cerrado.
+function turnosLocal($diaSemana) {
+    if ($diaSemana >= 1 && $diaSemana <= 5) {
+        return [[8 * 60, 12 * 60], [13 * 60 + 30, 20 * 60]];
+    }
+    if ($diaSemana == 6) {
+        return [[9 * 60, 17 * 60]];
+    }
+    return [];
+}
+
+// Devuelve null si la fecha y hora cae dentro del horario del local, o el mensaje de error.
 function validarHorarioLocal(DateTime $fechaHora) {
     $diaSemana = (int)$fechaHora->format('N');
     $totalMinutos = (int)$fechaHora->format('G') * 60 + (int)$fechaHora->format('i');
 
-    if ($diaSemana >= 1 && $diaSemana <= 5) {
-        $enTurno1 = $totalMinutos >= 8 * 60 && $totalMinutos <= 12 * 60;
-        $enTurno2 = $totalMinutos >= 13 * 60 + 30 && $totalMinutos <= 20 * 60;
-        if (!$enTurno1 && !$enTurno2) {
-            return 'Horario fuera del rango permitido de lunes a viernes (08:00 a 12:00 y 13:30 a 20:00).';
+    foreach (turnosLocal($diaSemana) as [$desde, $hasta]) {
+        if ($totalMinutos >= $desde && $totalMinutos <= $hasta) {
+            return null;
         }
-        return null;
+    }
+    if ($diaSemana >= 1 && $diaSemana <= 5) {
+        return 'Horario fuera del rango permitido de lunes a viernes (08:00 a 12:00 y 13:30 a 20:00).';
     }
     if ($diaSemana == 6) {
-        if ($totalMinutos < 9 * 60 || $totalMinutos > 17 * 60) {
-            return 'Horario fuera del rango permitido para los sábados (09:00 a 17:00).';
-        }
-        return null;
+        return 'Horario fuera del rango permitido para los sábados (09:00 a 17:00).';
     }
     return 'El local permanece cerrado los domingos.';
 }

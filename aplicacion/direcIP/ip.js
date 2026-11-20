@@ -6,7 +6,7 @@
 //   back_urls y el webhook necesitan una URL pública con HTTPS.
 const ENTORNO = 'local';
 
-const IP_LOCAL = '192.168.1.20';
+const IP_LOCAL = '192.168.1.86';
 // Dominio fijo que ngrok le asigna a la cuenta (dashboard → Domains). No es secreto.
 const NGROK_URL = 'https://open-prude-curse.ngrok-free.dev';
 

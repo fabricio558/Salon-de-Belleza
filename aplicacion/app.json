@@ -1,5 +1,8 @@
 {
   "name": "salonBelleza",
   "displayName": "salonBelleza",
-  "scheme": "salonbelleza"
+  "scheme": "salonbelleza",
+  "plugins": [
+    "expo-font"
+  ]
 }

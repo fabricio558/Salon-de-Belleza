@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../utils/api';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
+import { colors, typography, spacing } from '../theme';
+import Boton from './ui/Boton';
+
 
 export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs = null, onFinalizado }) {
   const [inicioTs, setInicioTs] = useState(horaInicioTs);
@@ -86,10 +90,12 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
     }
   };
 
+
   if (finTs) {
     return (
-      <View style={styles.contenedor}>
-        <Text style={styles.textoFinalizado}> Finalizado en {formatearTiempo(segundos)}</Text>
+      <View style={[styles.contenedor, styles.fila]}>
+        <Ionicons name="checkmark-done-outline" size={16} color={colors.success} />
+        <Text style={styles.textoFinalizado}>Finalizado en {formatearTiempo(segundos)}</Text>
       </View>
     );
   }
@@ -97,28 +103,59 @@ export default function TimerServicio({ idCitas, horaInicioTs = null, horaFinTs 
   if (inicioTs) {
     return (
       <View style={styles.contenedor}>
-        <Text style={styles.cronometro}>{formatearTiempo(segundos)}</Text>
-        <Pressable style={styles.botonFinalizar} onPress={finalizarServicio} disabled={cargando}>
-          {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.textoBoton}>Finalizar</Text>}
-        </Pressable>
+        <View style={styles.fila}>
+          <Ionicons name="time-outline" size={22} color={colors.enCurso} />
+          <Text style={styles.cronometro} accessibilityLabel={`Tiempo transcurrido ${formatearTiempo(segundos)}`}>
+            {formatearTiempo(segundos)}
+          </Text>
+        </View>
+        <Boton
+          titulo="Finalizar"
+          variante="danger"
+          tamano="sm"
+          icono="stop-circle-outline"
+          onPress={finalizarServicio}
+          cargando={cargando}
+        />
       </View>
     );
   }
 
   return (
     <View style={styles.contenedor}>
-      <Pressable style={styles.botonIniciar} onPress={iniciarServicio} disabled={cargando}>
-        {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.textoBoton}>Iniciar Servicio</Text>}
-      </Pressable>
+      <Boton
+        titulo="Iniciar servicio"
+        variante="secondary"
+        tamano="sm"
+        icono="play-circle-outline"
+        onPress={iniciarServicio}
+        cargando={cargando}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedor: { marginTop: 10, alignItems: 'center' },
-  cronometro: { fontSize: 28, fontWeight: 'bold', color: '#B8838A', marginBottom: 8, fontVariant: ['tabular-nums'] },
-  botonIniciar: { backgroundColor: '#81C784', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
-  botonFinalizar: { backgroundColor: '#E57373', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
-  textoBoton: { color: '#fff', fontWeight: 'bold' },
-  textoFinalizado: { color: '#64B5F6', fontWeight: '600' },
+  contenedor: {
+    alignItems: 'center',
+  },
+  fila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cronometro: {
+    ...typography.h2,
+    fontFamily: typography.bodyStrong.fontFamily,
+    // Único uso de color en la tarjeta: el servicio en curso se destaca con el
+    // azul pizarra del estado "En Curso" (8:1 sobre la tarjeta).
+    color: colors.enCurso,
+    marginLeft: spacing.xs,
+    marginBottom: spacing.xs,
+    fontVariant: ['tabular-nums'],
+  },
+  textoFinalizado: {
+    ...typography.caption,
+    color: colors.success,
+    marginLeft: spacing.xs,
+  },
 });

@@ -72,11 +72,15 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
 - Entrada: `index.js` → `registerRootComponent(prueba.js)` → `navigation.js`. `prueba.js` es el componente raíz (el test lo importa; no existe `App.js`).
 - `navigation.js`: stack nativo (`Cargando` → `Bienvenida` / `InicioSesion` / `MainDrawer`). `Cargando` revisa la clave `user_session` de AsyncStorage para saltear el login (si la sesión guardada no tiene `token`, la borra). `MainDrawer` arma las pantallas según el `idRol` de la sesión. Cerrar sesión llama a `logout` (revoca el token), borra `user_session` y vuelve a `Bienvenida`. Si una respuesta trae 401 con `sesionInvalida`, `utils/api.js` borra la sesión y `navigation.js` vuelve a `Bienvenida`.
 - **Roles** (`roles.idRol`): 1 = cliente, 2 = estilista, 3 = recepcionista. **No hay rol gerente**: las tareas administrativas (servicios, estilistas, comisiones, stock, proveedores, reportes) son del recepcionista. Cada rol tiene su tabla de subtipo (`clientes`, `estilistas`, `recepcionista`); al cambiar el rol de un usuario hay que crear la fila del subtipo nuevo (lo hace `update_rol_usuario.php`). Pantallas del drawer por rol:
-  - 1: HomeCliente, CrearCita, MisCitas, Productos, Carrito (como "Mi Carrito"), MisPedidos, GestionPerfil.
-  - 2: HomeEstilista, AgendaSemanal, FichaCliente, GestionPerfilEstilista.
-  - 3: HomeRecepcionista, AgendaRecepcion, CrearCita (como "Agendar Cita"), PedidosRecepcion (como "Pedidos"), GestionUsuarios, GestionPerfilRecepcionista.
+  - 1: HomeCliente, CrearCita, MisCitas, Productos, Carrito (como "Mi Carrito"), MisPedidos, MiPerfil.
+  - 2: HomeEstilista, AgendaSemanal, FichaCliente, MiPerfil.
+  - 3: HomeRecepcionista, AgendaRecepcion, CrearCita (como "Agendar Cita"), PedidosRecepcion (como "Pedidos"), GestionUsuarios, MiPerfil.
+
+  `MiPerfil` es una sola pantalla para los tres roles ("Mi Perfil"): lo que cambia por rol (endpoints de carga y guardado, campos, nombre del rol y el resumen con métricas tocables) está en `CONFIG_PERFIL` de `utils/perfil.js`. La UI está en `components/perfil/` (cabecera con avatar, resumen, grupos de ajustes, hojas inferiores para editar datos/notas/contraseña, esqueletos de carga y aviso flotante). Tests en `__tests__/perfil.test.js`.
 
   `CrearCita` la usan el cliente y el recepcionista: si el `idRol` de la sesión es 3, primero se elige el cliente (de `get_clientes_lista`) y la cita se crea para ese cliente.
+
+  En `CrearCita` se eligen servicios → estilista → día y horario. Los servicios se buscan en `components/BuscadorServicios.js` (`buscarServicios` de `utils/servicios.js`, sin tildes; "Ver todos" muestra el catálogo completo). El horario se toca en `components/AgendaDisponibilidad.js`: muestra 7 días por página y, para el día elegido, los horarios cada 30 min (libre, reservado o "no alcanza" para la duración de los servicios) y los rangos ya reservados, sin datos de otros clientes. Lo calcula `get_disponibilidad` con las mismas reglas que `crear_cita` (`turnosLocal`, `duracionDeServicios`, solo bloquean citas activas o en curso); `crear_cita` igual vuelve a validar. "Elegir otro horario" abre el selector manual.
 
   Los roles comparten nombres de pantalla como `"Inicio"`, `"Agenda Semanal"` y `"Mi Perfil"`. El stack, fuera del drawer, tiene además `Registro` (alta de usuarios, siempre como cliente).
 - Sesión: `InicioSesion.js` guarda en `user_session` el `data` que devuelve el login (`idUsuarios`, `idEstilistas` (solo estilistas, si no `null`), `nombres`, `apellido`, `idRol`, `token`) como JSON. Las pantallas leen de ahí el id del usuario; `utils/api.js` manda el `token` en cada pedido.
@@ -95,15 +99,17 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
   - `fechas.js`: formato y aritmética de fechas `AAAA-MM-DD`;
   - `horarios.js`: horario del local (`validarHorario`) y `formatearFechaHora` para enviar al servidor;
   - `texto.js`: `normalizarTexto`, para búsquedas sin tildes ni mayúsculas;
+  - `agenda.js`: `obtenerDisponibilidad` y el formato de la agenda de `CrearCita` (tests en `__tests__/agenda.test.js`);
+  - `perfil.js`: configuración por rol de "Mi Perfil", validaciones y resúmenes; `sesion.js`: `cerrarSesion(navigation)` (la usan el drawer y el perfil);
   - `generarFacturaPdf.js`: arma una factura en HTML y la imprime o comparte con `expo-print`/`expo-sharing`.
 
 ## Arquitectura de la API (`api_proyecto/`)
 
 - `index.php` agrega los headers de CORS (incluye `X-Session-Token` y `ngrok-skip-browser-warning`; responde 204 a `OPTIONS`) y JSON e incluye `router.php`, que deriva a `services/*.php` según el método HTTP y `?action=` con dos tablas (`$rutasGet`, `$rutasPost`). **Una acción desconocida responde 404** (ya no hay `get.php`/`post.php`).
-  - GET: `get_citas`, `get_cliente`/`get_clientes`, `get_servicios`, `get_estilistas`, `get_estilista`, `get_citas_dia`, `get_citas_semana`, `get_citasDiarias`, `get_citasSemanal`, `get_usuarios`, `get_perfil_recepcionista`, `get_citas_cliente`, `get_clientes_lista`, `get_productos`, `get_pedidos_cliente`, `get_estado_pago_cita`, `get_medios_pago`, `get_estado_pago_pedido`, `get_pagos_pendientes`, `get_pedidos_salon`, `retorno_pago` (HTML)
+  - GET: `get_citas`, `get_cliente`/`get_clientes`, `get_servicios`, `get_estilistas`, `get_estilista`, `get_citas_dia`, `get_citas_semana`, `get_citasDiarias`, `get_citasSemanal`, `get_usuarios`, `get_perfil_recepcionista`, `get_citas_cliente`, `get_clientes_lista`, `get_productos`, `get_pedidos_cliente`, `get_estado_pago_cita`, `get_medios_pago`, `get_estado_pago_pedido`, `get_pagos_pendientes`, `get_pedidos_salon`, `get_disponibilidad`, `retorno_pago` (HTML)
   - POST: `login`, `logout`, `crear_cita`, `iniciar_servicio`, `finalizar_servicio`, `update_servicios_cita`, `registrar_usuario`, `update_rol_usuario`, `update_perfil_recepcionista`, `update_contrasena`, `update_cliente`, `update_estilista`, `cancelar_cita`, `reprogramar_cita`, `cancelar_cita_salon`, `reprogramar_cita_salon`, `crear_pedido`, `cancelar_pedido`, `crear_preferencia_cita`, `registrar_cobro_cita`, `crear_preferencia_pedido`, `elegir_pago_local`, `entregar_pedido`, `webhook_mp`
 - `services/`, `migraciones/` y `config/` tienen un `.htaccess` con `Require all denied`: solo se ejecutan por `index.php` (los `include` van por disco). Con ngrok la API queda expuesta a internet.
-- Requieren sesión (`requerirSesion`): `get_clientes`, `get_estilista`, `update_cliente`, `update_estilista`, `update_contrasena`, `crear_cita` y todos los de pagos salvo `webhook_mp` y `retorno_pago`. El resto todavía confía en ids del body (ver `PENDIENTES.md`).
+- Requieren sesión (`requerirSesion`): `get_clientes`, `get_estilista`, `update_cliente`, `update_estilista`, `update_contrasena`, `crear_cita`, `get_disponibilidad` y todos los de pagos salvo `webhook_mp` y `retorno_pago`. El resto todavía confía en ids del body (ver `PENDIENTES.md`).
 - Los services leen el body con `json_decode(file_get_contents('php://input'), true)`, usan el `$conn` global de `db.php` con `require_once __DIR__ . '/../db.php'` y responden `{ success, message, data }`.
 - Patrón de los endpoints nuevos (por ejemplo `finalizar_servicio.php` o `get_citas_semana.php`):
   - `display_errors = 0`;
@@ -118,7 +124,7 @@ Jest usa el preset `react-native` y `jest.setup.js` (mocks de gesture-handler, A
   - `pedidos.php`: `vencerPedidos` (se llama al principio de cada endpoint de pedidos, porque no hay tareas programadas), `devolverStockPedido`, `marcarPedidoCancelado`, `esClienteActivo` y `DIAS_VENCIMIENTO_PEDIDO`. El stock se reserva al confirmar y vuelve al cancelar o vencer (los pedidos pagados no vencen). `crear_pedido` bloquea los productos con `FOR UPDATE` en orden de id y toma precio y stock de la base;
   - `permisos.php`: `esRecepcionista`, `responderSinPermiso`. El id del solicitante lo manda la app, así que no es una autorización real (ver `PENDIENTES.md`);
   - `horarios.php`:
-    - `validarHorarioLocal` (horario del local). La regla está duplicada en `aplicacion/utils/horarios.js`: si cambia, cambiala en los dos;
+    - `turnosLocal` (turnos en los que se puede empezar una cita, por día) y `validarHorarioLocal`, que lo usa. La regla está duplicada en `aplicacion/utils/horarios.js`: si cambia, cambiala en los dos;
     - `ANTICIPACION_CAMBIO_MINUTOS` (2 h para cancelar o reprogramar) y `motivoNoModificable`;
     - `citas_cambios.php`, que se apoya en `horarios.php`: cancelar y reprogramar para cliente y salón.
       - `obtenerCitaModificablePorCliente` (cita propia, activa, con 2 h de anticipación);

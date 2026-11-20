@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Pressable, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
   SafeAreaView,
   ActivityIndicator,
   Modal
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../utils/api';
 import Header from "../components/header";
 import TimerServicio from "../components/TimerServicio";
 import AccionesCitaSalon from '../components/AccionesCitaSalon';
-
+import { colors, typography, spacing, radius, shadows, estiloEstadoCita } from '../theme';
+import { Boton, Badge, Tarjeta, EstadoVacio, Texto, Titulo } from '../components/ui';
 // estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
 const ESTADO_ACTIVA = 1;
 
@@ -160,61 +162,76 @@ export default function HomeEstilista({ navigation }) {
     <SafeAreaView style={styles.container}>
       <Header navigation={navigation} />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerTitle}>
-          <Text style={styles.tituloPrincipal}>{saludo}, {nombre}</Text>
-          <Text style={styles.subtitulo}>{fechaActual}</Text>
-          <Text style={styles.resumenTexto}>
-            Tienes {citasHoy.length} {citasHoy.length === 1 ? 'cita programada' : 'citas programadas'} para hoy.
-          </Text>
+          <Titulo nivel="h1">{saludo}, {nombre}</Titulo>
+          <Texto variante="bodySmall" color="primaryText" style={styles.subtitulo}>{fechaActual}</Texto>
+          <View style={styles.resumen}>
+            <Ionicons name="calendar-outline" size={18} color={colors.primaryText} />
+            <Texto variante="bodySmall" color="text" style={styles.resumenTexto}>
+              Tienes {citasHoy.length} {citasHoy.length === 1 ? 'cita programada' : 'citas programadas'} para hoy.
+            </Texto>
+          </View>
         </View>
 
         <View style={styles.agendaContainer}>
-          <Text style={styles.tituloSeccion}>Tus Turnos de Hoy</Text>
-          
+          <Titulo nivel="h2" style={styles.tituloSeccion}>Tus turnos de hoy</Titulo>
+
           {cargandoCitas ? (
-            <ActivityIndicator size="large" color="#000000" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={styles.cargando} />
           ) : citasHoy.length > 0 ? (
             citasHoy.map((cita) => {
               const duracionTexto = calcularDuracion(cita.horaInicioTs, cita.horaFinTs);
 
               return (
-                <View key={cita.idCitas} style={styles.tarjetaCita}>
-                  <Pressable 
-                    style={styles.zonaNavegable}
+                <Tarjeta
+                  key={cita.idCitas}
+                  variante="cita"
+                  colorBorde={estiloEstadoCita(cita.idEstado).borde}
+                >
+                  <Pressable
+                    style={({ pressed }) => [styles.zonaNavegable, pressed && styles.zonaPresionada]}
                     onPress={() => navigation.navigate('FichaCliente', { id_clientes: cita.idClientes })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver ficha de ${cita.nombres} ${cita.apellido}, ${cita.hora}`}
                   >
                     <View style={styles.horaContainer}>
                       <Text style={styles.textoHora}>{cita.hora}</Text>
                     </View>
                     <View style={styles.infoContainer}>
-                      <Text style={styles.textoCliente}>{cita.nombres} {cita.apellido}</Text>
+                      <View style={styles.filaCliente}>
+                        <Text style={styles.textoCliente} numberOfLines={1}>{cita.nombres} {cita.apellido}</Text>
+                        {cita.idEstado ? <Badge estado={cita.idEstado} texto={cita.estado} /> : null}
+                      </View>
                       <Text style={styles.textoServicios}>
                         {cita.servicios ? cita.servicios : 'Sin servicios registrados'}
                       </Text>
-                    
+
                       <Text style={styles.textoPrecioTotal}>
                         Total: ${cita.precioTotal ? cita.precioTotal : '0'}
                       </Text>
-                    
+
                       {duracionTexto && (
-                        <Text style={styles.textoDuracion}>
-                          ⏱️ Duración: {duracionTexto}
-                        </Text>
+                        <View style={styles.filaDuracion}>
+                          <Ionicons name="timer-outline" size={14} color={colors.success} />
+                          <Text style={styles.textoDuracion}>Duración: {duracionTexto}</Text>
+                        </View>
                       )}
                     </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                   </Pressable>
 
                   <View style={styles.accionesFila}>
-                    <Pressable 
-                      style={styles.botonEditarServicios}
+                    <Boton
+                      titulo="Modificar servicios"
+                      variante="outline"
+                      tamano="sm"
+                      icono="create-outline"
                       onPress={() => abrirModalEdicion(cita)}
-                    >
-                      <Text style={styles.textoBotonEditar}>✏️ Modificar Servicios</Text>
-                    </Pressable>
+                    />
 
                     <TimerServicio
                       idCitas={cita.idCitas}
@@ -231,13 +248,15 @@ export default function HomeEstilista({ navigation }) {
                       onCambio={() => cargarDatos()}
                     />
                   )}
-                </View>
+                </Tarjeta>
               );
             })
           ) : (
-            <View style={styles.tarjetaVacia}>
-              <Text style={styles.textoVacio}>No tienes citas programadas para hoy.</Text>
-            </View>
+            <EstadoVacio
+              icono="calendar-clear-outline"
+              titulo="Día libre"
+              mensaje="No tienes citas programadas para hoy."
+            />
           )}
         </View>
       </ScrollView>
@@ -250,26 +269,33 @@ export default function HomeEstilista({ navigation }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Gestionar Servicios</Text>
-            <Text style={styles.modalSubtitulo}>Modifica los servicios asignados a este turno:</Text>
+            <Titulo nivel="h2" centrado>Gestionar servicios</Titulo>
+            <Texto variante="bodySmall" color="textMuted" centrado style={styles.modalSubtitulo}>
+              Modifica los servicios asignados a este turno.
+            </Texto>
 
-            <Text style={styles.seccionTituloModal}>📋 Servicios en la Cita:</Text>
+            <View style={styles.seccionModal}>
+              <Ionicons name="list-outline" size={18} color={colors.primaryText} />
+              <Text style={styles.seccionTituloModal}>Servicios en la cita</Text>
+            </View>
             <ScrollView style={styles.listaContenedor}>
               {serviciosSeleccionados.length > 0 ? (
                 serviciosSeleccionados.map((idServ) => {
                   const servInfo = serviciosCatalogo.find(s => s.idServicios == idServ);
-                  
+
                   return (
-                    <View key={idServ} style={styles.filaServicioActual}>
+                    <View key={idServ} style={styles.filaServicio}>
                       <Text style={styles.textoServicioActual}>
                         {servInfo ? servInfo.servicio : 'Cargando servicio...'}
                       </Text>
-                      <Pressable 
-                        style={styles.botonEliminar} 
+                      <Boton
+                        titulo="Quitar"
+                        variante="danger"
+                        tamano="sm"
+                        icono="trash-outline"
                         onPress={() => eliminarServicioDeCita(idServ)}
-                      >
-                        <Text style={styles.textoBotonEliminar}>🗑️ Quitar</Text>
-                      </Pressable>
+                        accessibilityLabel={`Quitar ${servInfo ? servInfo.servicio : 'servicio'}`}
+                      />
                     </View>
                   );
                 })
@@ -278,40 +304,43 @@ export default function HomeEstilista({ navigation }) {
               )}
             </ScrollView>
 
-            <Text style={[styles.seccionTituloModal, { marginTop: 15 }]}>➕ Agregar del Catálogo:</Text>
+            <View style={[styles.seccionModal, styles.seccionModalSeparada]}>
+              <Ionicons name="add-circle-outline" size={18} color={colors.primaryText} />
+              <Text style={styles.seccionTituloModal}>Agregar del catálogo</Text>
+            </View>
             <ScrollView style={styles.listaContenedor}>
               {serviciosCatalogo
                 .filter(serv => !serviciosSeleccionados.includes(serv.idServicios))
                 .map((serv) => (
-                  <View key={serv.idServicios} style={styles.filaServicioCatalogo}>
-                    <View style={{ flex: 1 }}>
+                  <View key={serv.idServicios} style={styles.filaServicio}>
+                    <View style={styles.infoServicioModal}>
                       <Text style={styles.textoServicioModal}>{serv.servicio}</Text>
                       <Text style={styles.precioServicioModal}>${serv.precio}</Text>
                     </View>
-                    <Pressable 
-                      style={styles.botonAgregar} 
+                    <Boton
+                      titulo="Agregar"
+                      variante="secondary"
+                      tamano="sm"
+                      icono="add"
                       onPress={() => agregarServicioACita(serv.idServicios)}
-                    >
-                      <Text style={styles.textoBotonAgregar}>➕ Agregar</Text>
-                    </Pressable>
+                      accessibilityLabel={`Agregar ${serv.servicio}`}
+                    />
                   </View>
                 ))}
             </ScrollView>
 
             <View style={styles.modalBotonesContainer}>
-              <Pressable 
-                style={[styles.modalBoton, styles.botonCancelarModal]} 
+              <Boton
+                titulo="Cancelar"
+                variante="outline"
                 onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.textoBotonCancelar}>Cancelar</Text>
-              </Pressable>
-
-              <Pressable 
-                style={[styles.modalBoton, styles.botonGuardarModal]} 
+                style={styles.modalBoton}
+              />
+              <Boton
+                titulo="Guardar cambios"
                 onPress={guardarCambiosServicios}
-              >
-                <Text style={styles.textoBotonGuardar}>Guardar Cambios</Text>
-              </Pressable>
+                style={styles.modalBoton}
+              />
             </View>
           </View>
         </View>
@@ -323,270 +352,190 @@ export default function HomeEstilista({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingTop: 15,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    paddingHorizontal: spacing.pantalla,
   },
   headerTitle: {
-    marginBottom: 20,
-  },
-  tituloPrincipal: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 0.5,
+    marginBottom: spacing.seccion,
   },
   subtitulo: {
-    fontSize: 14,
-    color: '#333333',
-    marginTop: 2,
+    marginTop: spacing.xxs,
     textTransform: 'capitalize',
-    fontWeight: '600',
+  },
+  resumen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.md,
+    alignSelf: 'flex-start',
   },
   resumenTexto: {
-    fontSize: 13,
-    color: '#666666',
-    marginTop: 4,
+    marginLeft: spacing.sm,
   },
   agendaContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.seccion,
   },
   tituloSeccion: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#000000',
-    marginBottom: 15,
-    letterSpacing: 0.5,
+    marginBottom: spacing.md,
   },
-  tarjetaCita: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 15,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  cargando: {
+    marginTop: spacing.xl,
   },
   zonaNavegable: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: spacing.toqueMinimo,
+    borderRadius: radius.md,
+  },
+  zonaPresionada: {
+    backgroundColor: colors.surfaceSubtle,
   },
   horaContainer: {
-    width: 65,
+    width: 64,
+    paddingVertical: spacing.xs,
     borderRightWidth: 1,
-    borderRightColor: '#EEEEEE',
-    marginRight: 15,
+    borderRightColor: colors.border,
+    marginRight: spacing.md,
     justifyContent: 'center',
   },
   textoHora: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#000000',
+    ...typography.h3,
+    fontSize: 17,
+    color: colors.textStrong,
   },
   infoContainer: {
     flex: 1,
     justifyContent: 'center',
   },
-  textoCliente: {
-    fontSize: 15,
-    color: '#000000',
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  tarjetaVacia: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    padding: 30,
+  filaCliente: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed',
-    marginTop: 10,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+    gap: spacing.sm,
   },
-  textoVacio: {
-    color: '#666666',
-    fontStyle: 'italic',
-    fontSize: 14,
+  textoCliente: {
+    ...typography.bodyStrong,
+    color: colors.textStrong,
+    flexShrink: 1,
   },
   textoServicios: {
-    fontSize: 13,
-    color: '#666666',
-    marginBottom: 4,
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+  textoPrecioTotal: {
+    ...typography.bodyStrong,
+    fontSize: 14,
+    color: colors.primaryText,
+  },
+  filaDuracion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
   },
   textoDuracion: {
-    color: '#2E7D32',
-    fontWeight: 'bold',
-    fontSize: 12,
-    marginTop: 4,
+    ...typography.caption,
+    color: colors.success,
+    marginLeft: spacing.xs,
   },
   accionesFila: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    paddingTop: 12,
-    width: '100%',
-  },
-  botonEditarServicios: {
-    backgroundColor: '#FAFAFA',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  textoBotonEditar: {
-    fontSize: 12,
-    color: '#000000',
-    fontWeight: 'bold',
+    borderTopColor: colors.border,
+    paddingTop: spacing.md,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
     width: '90%',
-    maxHeight: '80%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    elevation: 5,
-  },
-  modalTitulo: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
-    marginBottom: 5,
-    textAlign: 'center',
+    maxHeight: '85%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    ...shadows.lg,
   },
   modalSubtitulo: {
-    fontSize: 13,
-    color: '#666666',
-    marginBottom: 20,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  seccionModal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  seccionModalSeparada: {
+    marginTop: spacing.lg,
+  },
+  seccionTituloModal: {
+    ...typography.h3,
+    fontSize: 15,
+    color: colors.textStrong,
+    marginLeft: spacing.sm,
+  },
+  listaContenedor: {
+    maxHeight: 160,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filaServicio: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.sm,
+  },
+  textoServicioActual: {
+    ...typography.bodySmall,
+    color: colors.text,
+    flex: 1,
+  },
+  infoServicioModal: {
+    flex: 1,
+  },
+  textoServicioModal: {
+    ...typography.bodySmall,
+    color: colors.text,
+  },
+  precioServicioModal: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  textoVacioModal: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
     textAlign: 'center',
+    padding: spacing.lg,
   },
   modalBotonesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    gap: spacing.md,
+    marginTop: spacing.xl,
   },
   modalBoton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  botonCancelarModal: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  botonGuardarModal: {
-    backgroundColor: '#000000',
-  },
-  textoBotonCancelar: {
-    color: '#333333',
-    fontWeight: 'bold',
-  },
-  textoBotonGuardar: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  seccionTituloModal: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  filaServicioActual: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  textoServicioActual: {
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: '600',
-    flex: 1,
-  },
-  botonEliminar: {
-    backgroundColor: '#FFEBEE',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-  },
-  textoBotonEliminar: {
-    color: '#C62828',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  filaServicioCatalogo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  textoServicioModal: {
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: '500',
-  },
-  precioServicioModal: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  botonAgregar: {
-    backgroundColor: '#E8F5E9',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  textoBotonAgregar: {
-    color: '#2E7D32',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  textoVacioModal: {
-    fontSize: 13,
-    color: '#666666',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: 15,
-  },
-  listaContenedor: {
-    maxHeight: 140,      
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
-  textoPrecioTotal: {
-    fontSize: 14,
-    color: '#000000',
-    fontWeight: '900',
-    marginTop: 4,
   },
 });

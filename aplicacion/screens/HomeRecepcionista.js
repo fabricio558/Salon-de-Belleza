@@ -16,6 +16,8 @@ import AccionesCitaSalon from '../components/AccionesCitaSalon';
 import CobroCita from '../components/CobroCita';
 import { mensajeDeError, esRespuestaValida } from '../utils/manejoErrores';
 import { formatearFecha } from '../utils/fechas';
+import { colors, typography, spacing, radius, estiloEstadoCita } from '../theme';
+import { EstadoVacio, Titulo, Texto } from '../components/ui';
 
 // estado_cita.idEstado: solo las activas (todavía no iniciadas) se pueden reprogramar o cancelar.
 // Se cobran todas las que no están canceladas y tienen saldo.
@@ -74,21 +76,24 @@ export default function HomeRecepcionista({ navigation }) {
 
   const renderContenido = () => {
     if (cargando) {
-      return <ActivityIndicator size="large" color="#000000" style={styles.cargando} />;
+      return <ActivityIndicator size="large" color={colors.primary} style={styles.cargando} />;
     }
     if (error) {
       return (
-        <View style={styles.tarjetaMensaje}>
-          <Text style={styles.textoError}>{error}</Text>
-          <Text style={styles.textoAyuda}>Deslizá hacia abajo para reintentar.</Text>
-        </View>
+        <EstadoVacio
+          icono="cloud-offline-outline"
+          titulo={error}
+          mensaje="Deslizá hacia abajo para reintentar."
+        />
       );
     }
     if (citas.length === 0) {
       return (
-        <View style={styles.tarjetaMensaje}>
-          <Text style={styles.textoVacio}>No hay citas para hoy.</Text>
-        </View>
+        <EstadoVacio
+          icono="calendar-clear-outline"
+          titulo="Sin citas"
+          mensaje="No hay citas para hoy."
+        />
       );
     }
     return citas.map((cita) => (
@@ -110,26 +115,41 @@ export default function HomeRecepcionista({ navigation }) {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={refrescar}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         <View style={styles.encabezado}>
-          <Text style={styles.tituloPrincipal}>Citas del día</Text>
-          <Text style={styles.subtitulo}>{formatearFecha(fecha)}</Text>
+          <Titulo nivel="h1">Citas del día</Titulo>
+          <Texto variante="bodySmall" color="primaryText" style={styles.subtitulo}>{formatearFecha(fecha)}</Texto>
           {!cargando && !error && (
-            <Text style={styles.resumenTexto}>
+            <Texto variante="bodySmall" color="textMuted" style={styles.resumenTexto}>
               {citas.length} {citas.length === 1 ? 'cita' : 'citas'} en total
-            </Text>
+            </Texto>
           )}
         </View>
 
         {!cargando && !error && citas.length > 0 && (
           <View style={styles.filaResumen}>
-            {RESUMEN_ESTADOS.map(({ idEstado, etiqueta }) => (
-              <View key={idEstado} style={styles.cajaResumen}>
-                <Text style={styles.numeroResumen}>{contarPorEstado(idEstado)}</Text>
-                <Text style={styles.etiquetaResumen}>{etiqueta}</Text>
-              </View>
-            ))}
+            {RESUMEN_ESTADOS.map(({ idEstado, etiqueta }) => {
+              const estilo = estiloEstadoCita(idEstado);
+              return (
+                <View
+                  key={idEstado}
+                  style={[styles.cajaResumen, { backgroundColor: estilo.fondo }]}
+                  accessible
+                  accessibilityLabel={`${contarPorEstado(idEstado)} ${etiqueta}`}
+                >
+                  <Text style={[styles.numeroResumen, { color: estilo.texto }]}>{contarPorEstado(idEstado)}</Text>
+                  <Text style={[styles.etiquetaResumen, { color: estilo.texto }]}>{etiqueta}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -142,78 +162,42 @@ export default function HomeRecepcionista({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingTop: 15,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    paddingHorizontal: spacing.pantalla,
   },
   encabezado: {
-    marginBottom: 15,
-  },
-  tituloPrincipal: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 0.5,
+    marginBottom: spacing.lg,
   },
   subtitulo: {
-    fontSize: 14,
-    color: '#333333',
-    marginTop: 2,
+    marginTop: spacing.xxs,
     textTransform: 'capitalize',
-    fontWeight: '600',
   },
   resumenTexto: {
-    fontSize: 13,
-    color: '#666666',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   filaResumen: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    gap: spacing.sm,
+    marginBottom: spacing.seccion,
   },
   cajaResumen: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
-    marginHorizontal: 3,
-    borderRadius: 10,
-    backgroundColor: '#F7F7F7',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
   },
   numeroResumen: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
+    ...typography.h2,
   },
   etiquetaResumen: {
+    ...typography.caption,
     fontSize: 11,
-    color: '#666666',
-    marginTop: 2,
   },
   cargando: {
-    marginTop: 40,
-  },
-  tarjetaMensaje: {
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#F7F7F7',
-    alignItems: 'center',
-  },
-  textoVacio: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  textoError: {
-    fontSize: 14,
-    color: '#C62828',
-    textAlign: 'center',
-  },
-  textoAyuda: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 6,
+    marginTop: spacing.xxl,
   },
 });

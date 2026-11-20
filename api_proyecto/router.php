@@ -24,6 +24,7 @@ $rutasGet = [
     'get_medios_pago'          => 'get_medios_pago.php',
     'get_estado_pago_pedido'   => 'get_estado_pago_pedido.php',
     'get_pagos_pendientes'     => 'get_pagos_pendientes.php',
+    'get_disponibilidad'       => 'get_disponibilidad.php',
     'get_pedidos_salon'        => 'get_pedidos_salon.php',
     'retorno_pago'             => 'retorno_pago.php',
 ];

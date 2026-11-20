@@ -53,10 +53,12 @@ export default function MisCitas({ navigation }) {
   const [pendientesPago, setPendientesPago] = useState(null);
   const [mostrarResumen, setMostrarResumen] = useState(false);
 
-  // Citas y pedidos sin pagar, con el medio elegido para el local (ver MisPedidos).
+  // Citas sin pagar, con el medio elegido para el local. get_pagos_pendientes también
+  // trae los pedidos, pero acá no se muestran: esos se ven en MisPedidos.
   const cargarPendientesPago = async () => {
     try {
-      setPendientesPago(await obtenerPagosPendientes());
+      const pendientes = await obtenerPagosPendientes();
+      setPendientesPago(pendientes ? { ...pendientes, pedidos: [] } : pendientes);
     } catch (err) {
       console.log('Error en get_pagos_pendientes:', err);
     }
